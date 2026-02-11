@@ -13,26 +13,26 @@
 		</view>
 
 		<!-- 收入看板 -->
-		<view class="box mb30">
+		<view class="jj-box mb30">
 			<view class="fs34 fwb col1 lh36 mb20">收入看板</view>
 			<view class="income-row">
 				<view class="income-card">
-					<view class="fs24 col9">今日待结算</view>
+					<view class="fs24 col9">今日待结算(单位:元)</view>
 					<view class="income-amount col4">¥{{ formatPrice(income.todayPending) }}</view>
 				</view>
 				<view class="income-card">
-					<view class="fs24 col9">本月已结算</view>
+					<view class="fs24 col9">本月已结算(单位:元)</view>
 					<view class="income-amount col1">¥{{ formatPrice(income.monthSettled) }}</view>
 				</view>
 				<view class="income-card">
-					<view class="fs24 col9">累计收入</view>
+					<view class="fs24 col9">累计收入(单位:元)</view>
 					<view class="income-amount col2">¥{{ formatPrice(income.totalIncome) }}</view>
 				</view>
 			</view>
 		</view>
 
 		<!-- 心愿目标 -->
-		<view class="box mb30">
+		<view class="jj-box mb30">
 			<view class="flex-box mb20">
 				<view class="fs34 fwb col1 lh36 flex-grow-1">心愿目标</view>
 				<view class="fs24 col4" @click="onMenuClick('wish')">设定目标</view>
@@ -50,7 +50,7 @@
 		</view>
 
 		<!-- 待结算订单 -->
-		<view class="box mb30">
+		<view class="jj-box mb30">
 			<view class="fs34 fwb col1 lh36 mb20">待结算订单</view>
 			<view v-if="pendingOrders.length === 0" class="fs28 col9 tc ptb30">暂无待结算订单</view>
 			<view v-for="(item, idx) in pendingOrders" :key="idx" class="order-item" :class="{ 'bb': idx < pendingOrders.length - 1 }">
@@ -71,7 +71,7 @@
 		</view>
 
 		<!-- 功能菜单 -->
-		<view class="box mb30">
+		<view class="jj-box mb30">
 			<view class="fs34 fwb col1 lh36 mb20">功能菜单</view>
 			<view class="menu-grid">
 				<view class="menu-item" v-for="(item, idx) in menuList" :key="idx" @click="onMenuClick(item.key)">
@@ -91,32 +91,29 @@
 		data() {
 			return {
 				userinfo: {
-					nickname: '居间人昵称',
+					nickname: '居间人',
 					avatar: '',
-					score: 85,
-					mobile: '138****8888'
+					score: 0,
+					mobile: ''
 				},
 				income: {
-					todayPending: 3280.00,
-					monthSettled: 8320.00,
-					totalIncome: 56800.00
+					todayPending: 0,
+					monthSettled: 0,
+					totalIncome: 0
 				},
 				wishGoal: {
-					target: 10000,
-					current: 6800,
+					target: 0,
+					current: 0,
 					type: '月'
 				},
-				pendingOrders: [
-					{ id: '20240101', productName: '高强度螺纹钢 HRB400', commission: 149.80, countdown: '72:00:00', status: '佣金已锁定' },
-					{ id: '20240102', productName: '聚氯乙烯树脂 SG-5', commission: 287.70, countdown: '48:32:15', status: '佣金已锁定' },
-					{ id: '20240103', productName: 'LED工业照明灯 200W', commission: 224.00, countdown: '23:15:40', status: '佣金已锁定' }
-				],
+				pendingOrders: [],
 				menuList: [
 					{ key: 'commission', label: '佣金明细', icon: '/static/icon/icon_foot2_sc.png' },
 					{ key: 'wish', label: '心愿目标', icon: '/static/icon/icon_foot3_sc.png' },
 					{ key: 'pk_pool', label: 'PK奖池', icon: '/static/icon/icon_foot1_sc.png' },
 					{ key: 'red_packet', label: '平台红包', icon: '/static/icon/icon_foot4_sc.png' },
 					{ key: 'distribution', label: '分销推广', icon: '/static/icon/icon_foot1_sc.png' },
+					{ key: 'buyer_manage', label: '买家管理', icon: '/static/icon/icon_foot3_sc.png' },
 					{ key: 'settings', label: '账号设置', icon: '/static/icon/icon_foot5_sc.png' },
 					{ key: 'switch', label: '切换身份', icon: '/static/icon/icon_foot4_sc.png' },
 					{ key: 'logout', label: '退出登录', icon: '/static/icon/icon_foot4_uc.png' }
@@ -129,10 +126,28 @@
 				return Math.min(100, Math.round(this.wishGoal.current / this.wishGoal.target * 100));
 			}
 		},
+		mounted() {
+			this.loadProfile();
+		},
 		methods: {
-			formatPrice(price) {
-				if (!price) return '0.00';
-				return price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+			loadProfile() {
+				this.$core.get({
+					url: 'xiluxc.jj_agent/profile',
+					loading: false,
+					success: ret => {
+						let d = ret.data;
+						this.userinfo.nickname = d.nickname || '居间人';
+						this.userinfo.avatar = d.avatar || '';
+						this.userinfo.mobile = d.mobile || '';
+						if (d.agent_profile) {
+							this.userinfo.score = d.agent_profile.credit_score || 0;
+							this.income.totalIncome = Number(d.agent_profile.total_revenue) || 0;
+							this.income.monthSettled = Number(d.agent_profile.settled_revenue) || 0;
+							this.income.todayPending = Number(d.agent_profile.pending_revenue) || 0;
+						}
+					},
+					fail: () => { return false; }
+				});
 			},
 			onEditProfile() {
 				uni.showToast({ title: '功能开发中', icon: 'none' });
@@ -153,6 +168,9 @@
 						break;
 					case 'distribution':
 						uni.navigateTo({ url: '/pages/jj/jj_distribution/jj_distribution' });
+						break;
+					case 'buyer_manage':
+						uni.navigateTo({ url: '/pages/jj/jj_buyer_manage/jj_buyer_manage' });
 						break;
 					case 'settings':
 						uni.navigateTo({ url: '/pages/jj/jj_settings/jj_settings' });
@@ -205,12 +223,6 @@
 		color: #FFFFFF;
 		padding: 8rpx 24rpx;
 		border-radius: 30rpx;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
 	}
 
 	.income-row {
@@ -308,6 +320,10 @@
 		background: linear-gradient(135deg, #FE4B01, #FF8C00);
 	}
 
+	.menu-icon-buyer_manage {
+		background: linear-gradient(135deg, #36cfc9, #87e8de);
+	}
+
 	.menu-icon-settings {
 		background: linear-gradient(135deg, #722ed1, #b37feb);
 	}
@@ -329,12 +345,6 @@
 	@media screen and (min-width: 768px) {
 		.user-header {
 			padding: 30px 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
-		.box {
-			padding: 24px;
 			border-radius: 12px;
 			margin-bottom: 20px;
 		}

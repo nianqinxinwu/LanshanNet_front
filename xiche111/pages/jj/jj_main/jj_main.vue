@@ -13,13 +13,13 @@
 		<view class="main-content" :class="{ 'pc-content': isPC }">
 			<view class="content-wrap p30">
 				<!-- 首页 -->
-				<jj-home-content v-if="activeTab === 'home'" @switchTab="onTabChange" />
+				<jj-home-content v-if="activeTab === 'home'" @switchTab="onSwitchTab" />
 
 				<!-- 商品池 -->
 				<jj-products-content v-else-if="activeTab === 'products'" />
 
 				<!-- 订单 -->
-				<jj-orders-content v-else-if="activeTab === 'orders'" />
+				<jj-orders-content v-else-if="activeTab === 'orders'" :init-tab="ordersInitTab" :key="ordersKey" />
 
 				<!-- 我的 -->
 				<jj-profile-content v-else-if="activeTab === 'profile'" />
@@ -49,6 +49,8 @@
 		data() {
 			return {
 				activeTab: 'home',
+				ordersInitTab: 'all',
+				ordersKey: 0,
 				menuList: [
 					{
 						key: 'home',
@@ -89,6 +91,15 @@
 		},
 		methods: {
 			onTabChange(tabKey) {
+				this.activeTab = tabKey;
+			},
+			onSwitchTab(tabKey, status) {
+				if (status) {
+					this.ordersInitTab = status;
+					this.ordersKey++;
+				} else {
+					this.ordersInitTab = 'all';
+				}
 				this.activeTab = tabKey;
 			}
 		}

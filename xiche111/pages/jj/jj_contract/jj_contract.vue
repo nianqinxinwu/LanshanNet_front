@@ -1,9 +1,9 @@
 <template>
 	<view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 订单摘要 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">订单信息</view>
 					<view class="flex-box">
 						<image :src="orderInfo.coverImage" mode="aspectFill" class="product-thumb"></image>
@@ -17,7 +17,7 @@
 				<!-- ============ 合同上传阶段 ============ -->
 				<block v-if="stage === 'upload'">
 					<!-- 倒计时 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="countdown-header flex-box">
 							<view class="fs34 fwb col1 lh36 flex-grow-1">合同上传倒计时</view>
 							<view class="status-tag status-upload fs22">待上传</view>
@@ -39,7 +39,7 @@
 					</view>
 
 					<!-- 合同上传区 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb20">上传买卖合同</view>
 						<view class="fs24 col9 mb20">请上传正式买卖合同（PDF格式，≤10MB），合同内需包含最终锁定佣金金额。</view>
 
@@ -70,7 +70,7 @@
 				<!-- ============ 履约执行阶段 ============ -->
 				<block v-if="stage === 'execution'">
 					<!-- 状态横幅 -->
-					<view class="box mb30 execution-banner">
+					<view class="jj-box mb30 execution-banner">
 						<view class="flex-box flex-center flex-col">
 							<image src="/static/icon/icon_true.png" mode="aspectFill" class="banner-icon"></image>
 							<view class="fs30 fwb col1 mt15">合同已上传，进入履约期</view>
@@ -79,7 +79,7 @@
 					</view>
 
 					<!-- 履约倒计时 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="countdown-header flex-box">
 							<view class="fs34 fwb col1 lh36 flex-grow-1">履约倒计时</view>
 							<view class="status-tag status-exec fs22">履约中</view>
@@ -97,7 +97,7 @@
 					</view>
 
 					<!-- 操作按钮 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb20">操作</view>
 						<view class="action-btn flex-box bb" @click="urgeFactory">
 							<view class="flex-grow-1 fs28 col1">催促工厂</view>
@@ -122,7 +122,7 @@
 
 				<!-- ============ 已过期 ============ -->
 				<block v-if="stage === 'expired'">
-					<view class="box mb30 tc">
+					<view class="jj-box mb30 tc">
 						<view class="fs30 fwb" style="color: #FF4D4F;">合同上传已逾期</view>
 						<view class="fs26 col9 mt15 lh40">因未在规定时间内上传买卖合同，履约保证金已自动划转给工厂。</view>
 						<view class="mt30">
@@ -447,18 +447,6 @@
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
 	.product-thumb {
 		width: 100rpx;
 		height: 100rpx;
@@ -567,10 +555,6 @@
 		flex-shrink: 0;
 	}
 
-	.colf {
-		color: #FFFFFF;
-	}
-
 	/* 履约执行阶段 */
 	.execution-banner {
 		background: linear-gradient(135deg, #F0FFF4, #FFFFFF);
@@ -610,17 +594,6 @@
 
 	/* PC 端适配 */
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.upload-area {
 			height: 150px;
 			cursor: pointer;

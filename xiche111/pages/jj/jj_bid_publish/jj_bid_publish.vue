@@ -6,7 +6,7 @@
 			</view>
 		</view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 步骤指示 -->
 				<view class="steps-bar mb30">
 					<view class="step-item" :class="{ 'step-active': currentStep >= 1 }">
@@ -28,7 +28,7 @@
 				<!-- 第一步：选择工厂 -->
 				<view v-show="currentStep === 1">
 					<!-- 筛选条件 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb20">筛选工厂</view>
 						<view class="filter-row">
 							<view class="filter-item" @click="showPicker('province')">
@@ -44,7 +44,7 @@
 					</view>
 
 					<!-- 工厂列表 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs30 fwb col1 lh36 mb20">工厂列表</view>
 						<view
 							v-for="(factory, idx) in filteredFactories"
@@ -82,7 +82,7 @@
 
 				<!-- 第二步：填写需求 -->
 				<view v-show="currentStep === 2">
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb30">需求信息</view>
 						<view class="inp_nav flex-box col1 fs30 bb">
 							<view class="col5 label">产品品类</view>
@@ -111,13 +111,13 @@
 							</picker>
 						</view>
 						<view class="inp_nav flex-box col1 fs30">
-							<view class="col5 label">目标佣金</view>
+							<view class="col5 label">目标佣金(单位:元)</view>
 							<input type="digit" class="flex-grow-1 tr" v-model="targetCommission" placeholder="选填，供工厂参考" placeholder-class="cola" />
 						</view>
 					</view>
 
 					<!-- 已选工厂摘要 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs26 col9 mb15">已选工厂（{{ selectedFactories.length }}家）</view>
 						<view class="factory-tags">
 							<view v-for="f in selectedFactories" :key="f.id" class="factory-tag">
@@ -134,7 +134,7 @@
 
 				<!-- 第三步：买家信息 -->
 				<view v-show="currentStep === 3">
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb30">买家信息</view>
 						<view class="inp_nav flex-box col1 fs30 bb">
 							<view class="col5 label">企业名称</view>
@@ -163,7 +163,7 @@
 					</view>
 
 					<!-- 提交摘要 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs26 fwb col1 mb15">竞标摘要</view>
 						<view class="summary-row">
 							<text class="fs24 col9">品类：</text>
@@ -178,7 +178,7 @@
 							<text class="fs24 col1">{{ expectDelivery || '-' }}</text>
 						</view>
 						<view class="summary-row">
-							<text class="fs24 col9">目标佣金：</text>
+							<text class="fs24 col9">目标佣金(单位:元)：</text>
 							<text class="fs24 col4">{{ targetCommission ? '¥' + targetCommission : '面议' }}</text>
 						</view>
 						<view class="summary-row">
@@ -221,29 +221,10 @@
 <script>
 	var validate = require("../../../xilu/validate.js");
 
-	// Mock 工厂数据
-	const MOCK_FACTORIES = [
-		{ id: 101, name: '鑫达钢铁有限公司', province: '河北', city: '唐山', industry: '建材', fulfillRate: 96, productCount: 12 },
-		{ id: 102, name: '华北钢铁集团', province: '河北', city: '邯郸', industry: '建材', fulfillRate: 92, productCount: 8 },
-		{ id: 103, name: '中原特钢有限公司', province: '河南', city: '郑州', industry: '建材', fulfillRate: 88, productCount: 6 },
-		{ id: 201, name: '齐鲁石化工业', province: '山东', city: '淄博', industry: '化工', fulfillRate: 95, productCount: 15 },
-		{ id: 202, name: '长江化工集团', province: '江苏', city: '南京', industry: '化工', fulfillRate: 90, productCount: 20 },
-		{ id: 203, name: '蓝星化工研究院', province: '北京', city: '北京', industry: '化工', fulfillRate: 97, productCount: 10 },
-		{ id: 301, name: '沈阳机床集团', province: '辽宁', city: '沈阳', industry: '机械', fulfillRate: 94, productCount: 18 },
-		{ id: 302, name: '大连数控设备', province: '辽宁', city: '大连', industry: '机械', fulfillRate: 91, productCount: 9 },
-		{ id: 303, name: '济南重工机械', province: '山东', city: '济南', industry: '机械', fulfillRate: 87, productCount: 14 },
-		{ id: 401, name: '富士康精密电子', province: '广东', city: '深圳', industry: '电子', fulfillRate: 98, productCount: 25 },
-		{ id: 402, name: '华星光电科技', province: '广东', city: '深圳', industry: '电子', fulfillRate: 93, productCount: 11 },
-		{ id: 501, name: '鲁泰纺织集团', province: '山东', city: '淄博', industry: '纺织', fulfillRate: 89, productCount: 16 },
-		{ id: 502, name: '魏桥纺织股份', province: '山东', city: '滨州', industry: '纺织', fulfillRate: 92, productCount: 22 },
-		{ id: 601, name: '海螺水泥集团', province: '安徽', city: '芜湖', industry: '建材', fulfillRate: 96, productCount: 7 },
-		{ id: 602, name: '华润水泥控股', province: '广东', city: '广州', industry: '建材', fulfillRate: 94, productCount: 5 }
-	];
-
-	const PROVINCES = ['全部', '河北', '河南', '山东', '江苏', '北京', '辽宁', '广东', '安徽'];
-	const INDUSTRIES = ['全部', '建材', '化工', '机械', '电子', '纺织'];
 	const CATEGORIES = ['螺纹钢', '钢板', '钢管', '聚氯乙烯树脂', '环氧树脂', '丙烯酸乳液', 'CNC加工中心', '液压设备', '工业连接器', 'LED照明', '涤纶长丝', '棉坯布', '水泥'];
 	const UNITS = ['吨', '台', '个', '套', '米', '千克', '件'];
+	const PROVINCES = ['全部', '浙江', '广东', '山东', '江苏', '福建', '上海', '北京', '四川'];
+	const INDUSTRIES = ['全部', '日用品', '电子产品', '食品加工', '纺织服装', '茶叶'];
 
 	export default {
 		data() {
@@ -300,10 +281,7 @@
 					success: ret => {
 						this.factoryList = ret.data.list || [];
 					},
-					fail: () => {
-						this.factoryList = JSON.parse(JSON.stringify(MOCK_FACTORIES));
-						return false;
-					}
+					fail: () => { return false; }
 				});
 			},
 			isSelected(factoryId) {
@@ -458,18 +436,6 @@
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
 	/* 步骤条 */
 	.steps-bar {
 		display: flex;
@@ -665,17 +631,6 @@
 
 	/* PC 端适配 */
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.steps-bar {
 			padding: 24px 20px;
 			border-radius: 12px;

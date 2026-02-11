@@ -6,9 +6,9 @@
 			</view>
 		</view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 订单摘要 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">订单信息</view>
 					<view class="flex-box">
 						<image :src="orderInfo.coverImage" mode="aspectFill" class="product-thumb"></image>
@@ -24,10 +24,10 @@
 				</view>
 
 				<!-- 保证金金额 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">保证金明细</view>
 					<view class="detail-row flex-box bb">
-						<view class="col5 fs28">锁定佣金</view>
+						<view class="col5 fs28">锁定佣金(单位:元)</view>
 						<view class="flex-grow-1 tr fs28 col1">¥{{ formatPrice(orderInfo.commissionAmount) }}</view>
 					</view>
 					<view class="detail-row flex-box bb">
@@ -35,7 +35,7 @@
 						<view class="flex-grow-1 tr fs28 col1">{{ orderInfo.depositRate }}%</view>
 					</view>
 					<view class="detail-row flex-box">
-						<view class="col5 fs28 fwb">应缴保证金</view>
+						<view class="col5 fs28 fwb">应缴保证金(单位:元)</view>
 						<view class="flex-grow-1 tr">
 							<text class="fs24 col4">¥</text>
 							<text class="fs36 fwb col4">{{ formatPrice(depositAmount) }}</text>
@@ -44,7 +44,7 @@
 				</view>
 
 				<!-- 支付方式 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">支付方式</view>
 					<view class="pay-option flex-box bb" :class="{ active: payType === 'wxpay' }" @click="payType = 'wxpay'">
 						<image src="/static/icon/icon_pay2.png" mode="aspectFill" class="pay-ico"></image>
@@ -64,7 +64,7 @@
 				<view class="flex-box flex-center fs26 col6 mb30 flex-wrap">
 					<image @click="isAgree = !isAgree" :src="'/static/icon/'+(isAgree ? 'choose_sc' : 'choose_uc')+'.png'" mode="aspectFill" class="agree-ico mr10"></image>
 					<view>我已阅读并同意</view>
-					<view class="col4" @click="openAgreement">《履约保证协议》</view>
+					<view class="col4" @click="openAgreement('deposit_rule')">《履约保证协议》</view>
 				</view>
 
 				<!-- 提示信息 -->
@@ -94,6 +94,7 @@
 					commission: 0,
 					commissionAmount: 0,
 					depositRate: 0,
+					depositAmount: 0,
 					contractUploadHours: 24,
 					executionHours: 72
 				},
@@ -104,7 +105,7 @@
 		},
 		computed: {
 			depositAmount() {
-				return this.orderInfo.commissionAmount * this.orderInfo.depositRate / 100;
+				return Number(this.orderInfo.depositAmount) || 0;
 			}
 		},
 		onLoad(options) {
@@ -136,12 +137,6 @@
 					}
 				});
 			},
-			openAgreement() {
-				let id = getApp().globalData.config['deposit_rule'] || 0;
-				uni.navigateTo({
-					url: '/pages/rich_mp/rich_mp?id=' + id
-				});
-			},
 			onPay() {
 				if (!this.isAgree) {
 					uni.showToast({ title: '请同意《履约保证协议》', icon: 'none' });
@@ -154,9 +149,15 @@
 					url: 'xiluxc.jj_order/pay_deposit',
 					data: {
 						order_id: this.orderId,
-						pay_type: this.payType
+						pay_type: this.payType === 'wxpay' ? 1 : 2
 					},
 					success: ret => {
+						// debug模式：后端已模拟支付成功，直接走完成流程
+						if (ret.data && ret.data.mock_paid) {
+							this.onPaySuccess();
+							return;
+						}
+						// 正式环境：调起真实支付
 						if (this.payType === 'wxpay') {
 							this.wxPay(ret.data);
 						} else {
@@ -164,8 +165,7 @@
 						}
 					},
 					fail: err => {
-						// 接口未就绪，Mock 支付成功直接走流程
-						this.onPaySuccess();
+						this.paying = false;
 						return false;
 					}
 				});
@@ -229,28 +229,12 @@
 						uni.redirectTo({ url: contractUrl });
 					}
 				});
-			},
-			formatPrice(price) {
-				if (!price && price !== 0) return '0.00';
-				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			}
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
 	.product-thumb {
 		width: 140rpx;
 		height: 140rpx;
@@ -314,17 +298,6 @@
 
 	/* PC 端适配 */
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.detail-row {
 			padding: 16px 0;
 		}

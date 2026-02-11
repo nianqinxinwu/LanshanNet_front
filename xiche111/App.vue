@@ -108,6 +108,7 @@
 
 <style lang="scss">
 	@import "@/static/css/global.css";
+	@import "@/static/css/jj-shared.css";
 	@import "@/uni_modules/uview-ui/index.scss";
 
 	

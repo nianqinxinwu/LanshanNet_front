@@ -1,9 +1,9 @@
 <template>
 	<view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 物流类型切换 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="type-tabs flex-box">
 						<view class="type-tab flex-grow-1 tc" :class="{ active: logisticsType === 'platform' }"
 							@click="logisticsType = 'platform'">平台物流</view>
@@ -15,7 +15,7 @@
 				<!-- ============ 平台物流 ============ -->
 				<block v-if="logisticsType === 'platform'">
 					<!-- 物流信息卡片 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb20">物流信息</view>
 						<view class="detail-row flex-box bb">
 							<view class="col5 fs28">物流公司</view>
@@ -35,7 +35,7 @@
 							</view>
 						</view>
 						<view class="detail-row flex-box" v-if="logisticsInfo.rebateAmount > 0">
-							<view class="col5 fs28">物流返佣</view>
+							<view class="col5 fs28">物流返佣(单位:元)</view>
 							<view class="flex-grow-1 tr">
 								<text class="fs24 col4">¥</text>
 								<text class="fs30 fwb col4">{{ formatPrice(logisticsInfo.rebateAmount) }}</text>
@@ -44,7 +44,7 @@
 					</view>
 
 					<!-- 物流时间线 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb20">物流跟踪</view>
 						<view class="timeline">
 							<view class="timeline-item" v-for="(item, index) in logisticsTimeline" :key="index"
@@ -72,7 +72,7 @@
 				<!-- ============ 自提 ============ -->
 				<block v-if="logisticsType === 'self'">
 					<!-- 自提信息 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb20">自提信息</view>
 						<view class="detail-row flex-box bb">
 							<view class="col5 fs28">提货方式</view>
@@ -93,7 +93,7 @@
 					</view>
 
 					<!-- 提货要求 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb20">提货要求</view>
 						<view class="require-item flex-box mb15" v-for="(item, index) in pickupRequirements" :key="index">
 							<view class="require-dot"></view>
@@ -102,7 +102,7 @@
 					</view>
 
 					<!-- 提货单信息 -->
-					<view class="box mb30">
+					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb20">提货单</view>
 						<view class="fs24 col9 mb20">提货单需包含以下信息：产品清单、数量、买方身份证号、买方签字盖章</view>
 						<view class="pickup-note-card" v-if="selfPickupInfo.pickupNoteUrl">
@@ -124,7 +124,7 @@
 				</block>
 
 				<!-- 收发货清单 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">收发货清单</view>
 					<view class="fs24 col9 mb20">上传或查看收发货清单，用于确认货物交付情况</view>
 
@@ -156,15 +156,6 @@
 </template>
 
 <script>
-	// Mock 物流时间线
-	const MOCK_TIMELINE = [
-		{ desc: '已签收 - 买方已确认收货', time: '2026-02-08 14:30:00' },
-		{ desc: '运输中 - 货物已到达目的地中转站', time: '2026-02-07 18:20:00' },
-		{ desc: '运输中 - 货物已从发货地出发', time: '2026-02-06 09:15:00' },
-		{ desc: '已发货 - 工厂已将货物交付物流公司', time: '2026-02-05 16:40:00' },
-		{ desc: '已下单 - 物流订单已创建', time: '2026-02-05 10:00:00' }
-	];
-
 	export default {
 		data() {
 			return {
@@ -224,20 +215,7 @@
 							this.checklistFiles = data.checklist_files;
 						}
 					},
-					fail: () => {
-						// 接口未就绪，使用Mock数据
-						this.logisticsTimeline = [...MOCK_TIMELINE];
-						this.checklistFiles = [
-							{
-								type: 'image',
-								url: '/static/images/icon_upload_logo.png',
-								name: '发货清单-20260205.jpg',
-								time: '2026-02-05 16:45',
-								ext: 'JPG'
-							}
-						];
-						return false;
-					}
+					fail: () => { return false; }
 				});
 			},
 
@@ -327,29 +305,12 @@
 				let h = String(now.getHours()).padStart(2, '0');
 				let min = String(now.getMinutes()).padStart(2, '0');
 				return y + '-' + m + '-' + d + ' ' + h + ':' + min;
-			},
-
-			formatPrice(price) {
-				if (!price && price !== 0) return '0.00';
-				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			}
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
 	.colf {
 		color: #FFFFFF;
 	}
@@ -541,17 +502,6 @@
 
 	/* PC 端适配 */
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.type-tab {
 			height: 44px;
 			line-height: 44px;

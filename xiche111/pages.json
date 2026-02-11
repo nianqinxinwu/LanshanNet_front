@@ -464,6 +464,13 @@
 			{
 				"navigationBarTitleText" : "发起竞标"
 			}
+		},
+		{
+			"path" : "pages/jj/jj_buyer_manage/jj_buyer_manage",
+			"style" :
+			{
+				"navigationBarTitleText" : "买家管理"
+			}
 		}
 	],
 	"tabBar": {

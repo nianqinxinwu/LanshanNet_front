@@ -1,9 +1,9 @@
 <template>
 	<view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 个人信息 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">个人信息</view>
 					<!-- #ifdef MP-WEIXIN -->
 					<button class="cell-btn flex-box bb" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
@@ -52,7 +52,7 @@
 				</view>
 
 				<!-- 认证信息 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">认证信息</view>
 					<view class="cell flex-box bb">
 						<view class="col5 fs28 cell-label">认证类型</view>
@@ -67,7 +67,7 @@
 				</view>
 
 				<!-- 其他 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">其他</view>
 					<view class="cell flex-box bb" @click="onSwitchRole">
 						<view class="col1 fs28 flex-grow-1">切换身份</view>
@@ -292,18 +292,6 @@
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
 	.cell {
 		padding: 28rpx 0;
 	}
@@ -407,17 +395,6 @@
 
 	/* PC端适配 */
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.cell,
 		.cell-btn {
 			padding: 18px 0;

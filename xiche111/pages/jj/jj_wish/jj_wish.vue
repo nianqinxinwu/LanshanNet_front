@@ -1,9 +1,9 @@
 <template>
 	<view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 当前心愿目标 -->
-				<view class="box mb30" v-if="currentGoal.id">
+				<view class="jj-box mb30" v-if="currentGoal.id">
 					<view class="flex-box mb20">
 						<view class="fs34 fwb col1 lh36 flex-grow-1">当前目标</view>
 						<view class="goal-type-tag fs22">{{ getTypeName(currentGoal.type) }}</view>
@@ -46,18 +46,16 @@
 				</view>
 
 				<!-- 设定新目标 / 修改目标 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">{{ currentGoal.id ? '修改目标' : '设定心愿目标' }}</view>
 
 					<!-- 目标类型 -->
-					<view class="fs28 col1 mb10">目标周期</view>
+					<view class="fs28 col1 mb10">目标类型</view>
 					<view class="type-selector flex-box mb20">
-						<view class="type-option flex-grow-1 tc" :class="{ active: form.type === 'week' }"
-							@click="form.type = 'week'">周目标</view>
-						<view class="type-option flex-grow-1 tc" :class="{ active: form.type === 'month' }"
-							@click="form.type = 'month'">月目标</view>
-						<view class="type-option flex-grow-1 tc" :class="{ active: form.type === 'year' }"
-							@click="form.type = 'year'">年目标</view>
+						<view class="type-option flex-grow-1 tc" :class="{ active: form.type === 'income' }"
+							@click="form.type = 'income'">收入目标</view>
+						<view class="type-option flex-grow-1 tc" :class="{ active: form.type === 'order' }"
+							@click="form.type = 'order'">订单目标</view>
 					</view>
 
 					<!-- 目标金额 -->
@@ -86,7 +84,7 @@
 				</view>
 
 				<!-- 历史目标记录 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">历史目标</view>
 					<view v-if="historyGoals.length === 0" class="fs28 col9 tc ptb30">暂无历史记录</view>
 					<view v-for="(item, idx) in historyGoals" :key="idx" class="history-item" :class="{ bb: idx < historyGoals.length - 1 }">
@@ -123,22 +121,18 @@
 			return {
 				currentGoal: {
 					id: 1,
-					type: 'month',
+					type: 'income',
 					target: 10000,
 					current: 6800,
 					rewardDesc: '达成后获得 ¥200 现金红包',
 					claimed: false
 				},
 				form: {
-					type: 'month',
+					type: 'income',
 					target: ''
 				},
 				quickAmounts: [5000, 10000, 30000, 50000, 100000],
-				historyGoals: [
-					{ type: 'month', target: 8000, current: 8500, period: '2026年1月', achieved: true },
-					{ type: 'week', target: 3000, current: 2100, period: '2026年第4周', achieved: false },
-					{ type: 'month', target: 10000, current: 12300, period: '2025年12月', achieved: true }
-				]
+				historyGoals: []
 			}
 		},
 		computed: {
@@ -149,6 +143,7 @@
 		},
 		onLoad() {
 			this.loadCurrentGoal();
+			this.loadHistory();
 		},
 		methods: {
 			loadCurrentGoal() {
@@ -164,9 +159,30 @@
 				});
 			},
 
+			loadHistory() {
+				this.$core.get({
+					url: 'xiluxc.jj_wish/history',
+					data: { page: 1, pagesize: 20 },
+					loading: false,
+					success: ret => {
+						let rawList = ret.data.data || ret.data || [];
+						if (Array.isArray(rawList)) {
+							this.historyGoals = rawList.map(item => ({
+								type: item.type,
+								target: Number(item.target_amount) || 0,
+								current: Number(item.current) || 0,
+								period: item.period || '',
+								achieved: item.achieved || false
+							}));
+						}
+					},
+					fail: () => { return false; }
+				});
+			},
+
 			getTypeName(type) {
-				const map = { week: '周目标', month: '月目标', year: '年目标' };
-				return map[type] || '月目标';
+				const map = { income: '收入目标', order: '订单目标' };
+				return map[type] || '收入目标';
 			},
 
 			getRewardPreview() {
@@ -233,29 +249,12 @@
 						return false;
 					}
 				});
-			},
-
-			formatPrice(price) {
-				if (!price && price !== 0) return '0.00';
-				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			}
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
 	/* 目标类型标签 */
 	.goal-type-tag {
 		background: rgba(254, 75, 1, 0.1);
@@ -390,17 +389,6 @@
 	}
 
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.type-option {
 			height: 44px;
 			line-height: 44px;

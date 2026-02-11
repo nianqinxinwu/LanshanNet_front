@@ -1,7 +1,7 @@
 <template>
 	<view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 状态横幅 -->
 				<view class="status-banner mb30" :class="'banner-status-' + bidInfo.status">
 					<view class="fs30 fwb colf">{{ statusText(bidInfo.status) }}</view>
@@ -18,7 +18,7 @@
 				</view>
 
 				<!-- 竞标信息 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">竞标信息</view>
 					<view class="info-grid">
 						<view class="info-item">
@@ -42,14 +42,14 @@
 							<view class="fs26 col1 mt5">{{ bidInfo.expectDelivery }}</view>
 						</view>
 						<view class="info-item">
-							<view class="fs22 col9">目标佣金</view>
+							<view class="fs22 col9">目标佣金(单位:元)</view>
 							<view class="fs26 col4 mt5">{{ bidInfo.targetCommission ? '¥' + formatPrice(bidInfo.targetCommission) : '面议' }}</view>
 						</view>
 					</view>
 				</view>
 
 				<!-- 报价进度 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="flex-box flex-between flex-v-center mb20">
 						<view class="fs34 fwb col1 lh36">报价进度</view>
 						<view class="fs26 col4 fwb">{{ bidInfo.quotedCount }}/{{ bidInfo.factoryCount }}</view>
@@ -64,7 +64,7 @@
 				</view>
 
 				<!-- 工厂报价对比 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">工厂报价对比</view>
 
 					<view v-if="!bidInfo.quotes || bidInfo.quotes.length === 0" class="tc ptb30">
@@ -91,7 +91,7 @@
 						<!-- 报价详情（已报价时） -->
 						<view v-if="q.status === 1" class="quote-detail-grid">
 							<view class="quote-detail-item">
-								<view class="fs22 col9">合同价(单价)</view>
+								<view class="fs22 col9">合同价/单价(单位:元)</view>
 								<view class="fs28 fwb col1 mt5">¥{{ formatPrice(q.contractPrice) }}</view>
 							</view>
 							<view class="quote-detail-item">
@@ -99,7 +99,7 @@
 								<view class="fs28 col1 mt5">{{ q.deliveryDate }}</view>
 							</view>
 							<view class="quote-detail-item">
-								<view class="fs22 col9">佣金总额</view>
+								<view class="fs22 col9">佣金总额(单位:元)</view>
 								<view class="fs28 fwb col4 mt5">¥{{ formatPrice(q.commissionAmount) }}</view>
 							</view>
 							<view class="quote-detail-item">
@@ -110,7 +110,7 @@
 
 						<!-- 合同总价（已报价时） -->
 						<view v-if="q.status === 1" class="total-price-row mt15">
-							<text class="fs24 col9">合同总价（预估）：</text>
+							<text class="fs24 col9">合同总价/预估(单位:元)：</text>
 							<text class="fs28 fwb col1">¥{{ formatPrice(q.contractPrice * bidInfo.quantity) }}</text>
 						</view>
 
@@ -134,7 +134,7 @@
 				</view>
 
 				<!-- 买家信息 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">买家信息</view>
 					<view class="buyer-info-list">
 						<view class="buyer-row bb">
@@ -180,61 +180,11 @@
 </template>
 
 <script>
-	// Mock 竞标详情（同 bid_board 中的数据结构）
-	const MOCK_BID_MAP = {
-		1: {
-			id: 1, bidSn: 'BID20260208001', categoryName: '高强度螺纹钢 HRB400',
-			quantity: 500, unit: '吨', expectDelivery: '2026-03-01', targetCommission: 15000,
-			factoryCount: 3, quotedCount: 2, status: 1, remainTime: 36 * 3600,
-			createTime: '2026-02-08 10:00',
-			buyerInfo: { companyName: '鑫盛建设集团', address: '上海市浦东新区张江高科技园区', contactName: '张经理', contactPhone: '13800001111' },
-			quotes: [
-				{ factoryId: 101, factoryName: '鑫达钢铁有限公司', status: 1, contractPrice: 4280, deliveryDate: '2026-02-28', commissionAmount: 14980, fulfillRate: 96, selected: false },
-				{ factoryId: 102, factoryName: '华北钢铁集团', status: 1, contractPrice: 4150, deliveryDate: '2026-03-05', commissionAmount: 14525, fulfillRate: 92, selected: false },
-				{ factoryId: 103, factoryName: '中原特钢有限公司', status: 0, contractPrice: 0, deliveryDate: '', commissionAmount: 0, fulfillRate: 88, selected: false }
-			]
-		},
-		2: {
-			id: 2, bidSn: 'BID20260207002', categoryName: '聚氯乙烯树脂 SG-5',
-			quantity: 200, unit: '吨', expectDelivery: '2026-02-25', targetCommission: 8000,
-			factoryCount: 2, quotedCount: 2, status: 2, remainTime: 0,
-			createTime: '2026-02-07 14:30',
-			buyerInfo: { companyName: '恒通化工科技', address: '江苏省南京市江宁区科创路88号', contactName: '李总', contactPhone: '13900002222' },
-			quotes: [
-				{ factoryId: 201, factoryName: '齐鲁石化工业', status: 1, contractPrice: 6850, deliveryDate: '2026-02-22', commissionAmount: 8220, fulfillRate: 95, selected: true },
-				{ factoryId: 202, factoryName: '长江化工集团', status: 1, contractPrice: 7100, deliveryDate: '2026-02-24', commissionAmount: 7810, fulfillRate: 90, selected: false }
-			]
-		},
-		3: {
-			id: 3, bidSn: 'BID20260205003', categoryName: 'CNC精密加工中心 VMC850',
-			quantity: 5, unit: '台', expectDelivery: '2026-03-15', targetCommission: 0,
-			factoryCount: 4, quotedCount: 1, status: 3, remainTime: 0,
-			createTime: '2026-02-05 09:00',
-			buyerInfo: { companyName: '精工机械制造', address: '广东省深圳市宝安区工业园', contactName: '王工', contactPhone: '13700003333' },
-			quotes: [
-				{ factoryId: 301, factoryName: '沈阳机床集团', status: 1, contractPrice: 185000, deliveryDate: '2026-03-10', commissionAmount: 18500, fulfillRate: 94, selected: false },
-				{ factoryId: 302, factoryName: '大连数控设备', status: 2, contractPrice: 0, deliveryDate: '', commissionAmount: 0, fulfillRate: 91, selected: false },
-				{ factoryId: 303, factoryName: '济南重工机械', status: 2, contractPrice: 0, deliveryDate: '', commissionAmount: 0, fulfillRate: 87, selected: false },
-				{ factoryId: 304, factoryName: '武汉精密制造', status: 2, contractPrice: 0, deliveryDate: '', commissionAmount: 0, fulfillRate: 93, selected: false }
-			]
-		},
-		4: {
-			id: 4, bidSn: 'BID20260208004', categoryName: '环氧树脂 E-51',
-			quantity: 100, unit: '吨', expectDelivery: '2026-03-10', targetCommission: 12000,
-			factoryCount: 5, quotedCount: 0, status: 1, remainTime: 68 * 3600,
-			createTime: '2026-02-08 08:00',
-			buyerInfo: { companyName: '新材料科技有限公司', address: '浙江省杭州市滨江区科技园', contactName: '陈经理', contactPhone: '13600004444' },
-			quotes: [
-				{ factoryId: 401, factoryName: '蓝星化工研究院', status: 0, contractPrice: 0, deliveryDate: '', commissionAmount: 0, fulfillRate: 97, selected: false },
-				{ factoryId: 402, factoryName: '巴陵石化树脂', status: 0, contractPrice: 0, deliveryDate: '', commissionAmount: 0, fulfillRate: 93, selected: false },
-				{ factoryId: 403, factoryName: '南亚环氧科技', status: 0, contractPrice: 0, deliveryDate: '', commissionAmount: 0, fulfillRate: 89, selected: false },
-				{ factoryId: 404, factoryName: '黄山化工集团', status: 0, contractPrice: 0, deliveryDate: '', commissionAmount: 0, fulfillRate: 91, selected: false },
-				{ factoryId: 405, factoryName: '岳阳兴长石化', status: 0, contractPrice: 0, deliveryDate: '', commissionAmount: 0, fulfillRate: 86, selected: false }
-			]
-		}
-	};
+	var mappers = require("../../../xilu/mappers.js");
+	var countdownMixin = require("../../../xilu/countdown-mixin.js");
 
 	export default {
+		mixins: [countdownMixin],
 		data() {
 			return {
 				bidId: '',
@@ -253,8 +203,7 @@
 					createTime: '',
 					buyerInfo: { companyName: '', address: '', contactName: '', contactPhone: '' },
 					quotes: []
-				},
-				countdownTimer: null
+				}
 			}
 		},
 		computed: {
@@ -275,78 +224,44 @@
 			this.loadDetail();
 		},
 		onShow() {
-			this.startCountdown();
-		},
-		onHide() {
-			this.stopCountdown();
-		},
-		onUnload() {
-			this.stopCountdown();
+			this.startDetailCountdown();
 		},
 		methods: {
+			startDetailCountdown() {
+				if (this.bidInfo.status !== 1 || this.bidInfo.remainTime <= 0) return;
+				this.countdownStart(() => {
+					if (this.bidInfo.remainTime > 0) {
+						this.bidInfo.remainTime--;
+						if (this.bidInfo.remainTime <= 0) {
+							this.bidInfo.status = 3;
+							return true;
+						}
+						return false;
+					}
+					return true;
+				});
+			},
+
 			loadDetail() {
 				this.$core.get({
 					url: 'xiluxc.jj_bid/detail',
 					data: { bid_id: this.bidId },
 					loading: true,
 					success: ret => {
-						this.bidInfo = Object.assign(this.bidInfo, ret.data);
-						this.startCountdown();
+						let data = ret.data;
+						if (data.quotes && Array.isArray(data.quotes)) {
+							data.quotes = data.quotes.map(q => mappers.mapQuote(q));
+						}
+						this.bidInfo = Object.assign(this.bidInfo, data);
+						this.startDetailCountdown();
 					},
-					fail: () => {
-						this.loadMockData();
-						return false;
-					}
+					fail: () => { return false; }
 				});
-			},
-
-			loadMockData() {
-				let id = parseInt(this.bidId) || this.bidInfo.id;
-				if (MOCK_BID_MAP[id]) {
-					this.bidInfo = JSON.parse(JSON.stringify(MOCK_BID_MAP[id]));
-				}
-				this.startCountdown();
 			},
 
 			statusText(status) {
 				const map = { 1: '竞标中', 2: '已完成', 3: '已过期' };
 				return map[status] || '未知';
-			},
-
-			formatPrice(price) {
-				if (!price && price !== 0) return '0.00';
-				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-			},
-
-			formatCountdown(seconds) {
-				if (seconds <= 0) return '00:00:00';
-				let h = Math.floor(seconds / 3600);
-				let m = Math.floor((seconds % 3600) / 60);
-				let s = seconds % 60;
-				return (h < 10 ? '0' + h : h) + ':' + (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
-			},
-
-			startCountdown() {
-				this.stopCountdown();
-				if (this.bidInfo.status !== 1 || this.bidInfo.remainTime <= 0) return;
-				this.countdownTimer = setInterval(() => {
-					if (this.bidInfo.remainTime > 0) {
-						this.bidInfo.remainTime--;
-						if (this.bidInfo.remainTime <= 0) {
-							this.bidInfo.status = 3;
-							this.stopCountdown();
-						}
-					} else {
-						this.stopCountdown();
-					}
-				}, 1000);
-			},
-
-			stopCountdown() {
-				if (this.countdownTimer) {
-					clearInterval(this.countdownTimer);
-					this.countdownTimer = null;
-				}
 			},
 
 			onSelectFactory() {
@@ -396,7 +311,7 @@
 				this.bidInfo.quotes.forEach(q => {
 					q.selected = q.factoryId === factory.factoryId;
 				});
-				this.stopCountdown();
+				this.countdownStop();
 				let param = encodeURIComponent(JSON.stringify({
 					productName: this.bidInfo.categoryName,
 					coverImage: '/static/images/icon_upload_logo.png',
@@ -434,24 +349,29 @@
 
 			goBack() {
 				uni.navigateBack();
+			},
+
+			formatCountdown(seconds) {
+				if (!seconds || seconds <= 0) return '已结束';
+				let h = Math.floor(seconds / 3600);
+				let m = Math.floor((seconds % 3600) / 60);
+				let s = seconds % 60;
+				let parts = [];
+				if (h > 0) parts.push(h + '时');
+				if (m > 0 || h > 0) parts.push((m < 10 && h > 0 ? '0' : '') + m + '分');
+				parts.push((s < 10 ? '0' : '') + s + '秒');
+				return parts.join('');
+			},
+
+			formatPrice(price) {
+				if (!price && price !== 0) return '0.00';
+				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			}
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
 	.colf { color: #FFFFFF; }
 	.col-green { color: #52C41A; }
 	.col-warn { color: #FAAD14; }
@@ -616,17 +536,6 @@
 
 	/* PC 端适配 */
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.status-banner {
 			padding: 32px 24px;
 			border-radius: 12px;

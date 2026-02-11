@@ -1,9 +1,9 @@
 <template>
 	<view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 状态横幅 -->
-				<view class="box mb30 status-banner" :class="'banner-' + orderInfo.state">
+				<view class="jj-box mb30 status-banner" :class="'banner-' + orderInfo.state">
 					<view class="tc">
 						<view class="fs30 fwb colf">{{ getStatusBannerText(orderInfo.state) }}</view>
 						<view class="fs24 colf mt10" style="opacity:0.8;">{{ getStatusBannerDesc(orderInfo.state) }}</view>
@@ -11,7 +11,7 @@
 				</view>
 
 				<!-- 订单信息摘要 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">订单信息</view>
 					<view class="flex-box">
 						<image :src="orderInfo.coverImage" mode="aspectFill" class="product-thumb"></image>
@@ -25,32 +25,32 @@
 				</view>
 
 				<!-- 佣金已锁定横幅（状态>=2时显示） -->
-				<view class="box mb30 lock-banner" v-if="orderInfo.state >= 2">
+				<view class="jj-box mb30 lock-banner" v-if="orderInfo.state >= 2">
 					<view class="flex-box flex-center">
 						<view class="lock-icon-wrap">
 							<text class="fs24 colf">锁</text>
 						</view>
 						<view class="ml15">
-							<view class="fs28 fwb col1">佣金已锁定</view>
+							<view class="fs28 fwb col1">佣金已锁定(单位:元)</view>
 							<view class="fs36 fwb col4 mt5">¥{{ formatPrice(orderInfo.commissionAmount) }}</view>
 						</view>
 					</view>
 				</view>
 
 				<!-- 金额明细 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">金额明细</view>
 					<view class="detail-row flex-box bb">
-						<view class="col5 fs28">基础佣金</view>
+						<view class="col5 fs28">基础佣金(单位:元)</view>
 						<view class="flex-grow-1 tr fs28 col1">¥{{ formatPrice(orderInfo.commissionAmount) }}</view>
 					</view>
 					<view class="detail-row flex-box bb detail-clickable" @click="goFactoryBonus">
-						<view class="col5 fs28">预计厂家奖金</view>
+						<view class="col5 fs28">预计厂家奖金(单位:元)</view>
 						<view class="flex-grow-1 tr fs28 col1">¥{{ formatPrice(orderInfo.factoryBonus) }}</view>
 						<image src="/static/icon/icon_right_gray.png" mode="aspectFill" class="cell-arrow ml10"></image>
 					</view>
 					<view class="detail-row flex-box bb detail-clickable" @click="goLogisticsRebate">
-						<view class="col5 fs28">预计物流返佣</view>
+						<view class="col5 fs28">预计物流返佣(单位:元)</view>
 						<view class="flex-grow-1 tr fs28 col1">¥{{ formatPrice(orderInfo.logisticsRebate) }}</view>
 						<image src="/static/icon/icon_right_gray.png" mode="aspectFill" class="cell-arrow ml10"></image>
 					</view>
@@ -67,7 +67,7 @@
 				</view>
 
 				<!-- 厂家奖金详情弹窗 -->
-				<view class="box mb30" v-if="showBonusDetail">
+				<view class="jj-box mb30" v-if="showBonusDetail">
 					<view class="flex-box mb20">
 						<view class="fs34 fwb col1 lh36 flex-grow-1">厂家奖金详情</view>
 						<view class="fs24 col9" @click="showBonusDetail = false">收起</view>
@@ -92,7 +92,7 @@
 				</view>
 
 				<!-- 物流返佣详情弹窗 -->
-				<view class="box mb30" v-if="showRebateDetail">
+				<view class="jj-box mb30" v-if="showRebateDetail">
 					<view class="flex-box mb20">
 						<view class="fs34 fwb col1 lh36 flex-grow-1">物流返佣详情</view>
 						<view class="fs24 col9" @click="showRebateDetail = false">收起</view>
@@ -107,7 +107,7 @@
 							<view class="flex-grow-1 tr fs28 col1">{{ rebateInfo.rate || 0 }}%</view>
 						</view>
 						<view class="detail-row flex-box bb">
-							<view class="col5 fs28">返佣金额</view>
+							<view class="col5 fs28">返佣金额(单位:元)</view>
 							<view class="flex-grow-1 tr fs28 fwb col4">¥{{ formatPrice(orderInfo.logisticsRebate) }}</view>
 						</view>
 						<view class="detail-row flex-box">
@@ -123,7 +123,7 @@
 				</view>
 
 				<!-- 履约倒计时（状态3/4时显示） -->
-				<view class="box mb30" v-if="orderInfo.state === 3 || orderInfo.state === 4">
+				<view class="jj-box mb30" v-if="orderInfo.state === 3 || orderInfo.state === 4">
 					<view class="countdown-header flex-box">
 						<view class="fs34 fwb col1 lh36 flex-grow-1">
 							{{ orderInfo.state === 3 ? '合同上传倒计时' : '履约倒计时' }}
@@ -147,7 +147,7 @@
 				</view>
 
 				<!-- 三流进度 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">履约进度</view>
 
 					<!-- 合同流 -->
@@ -198,20 +198,25 @@
 				</view>
 
 				<!-- 操作按钮 -->
-				<view class="box mb30" v-if="getActions().length > 0">
+				<view class="jj-box mb30" v-if="getActions().length > 0">
 					<view class="fs34 fwb col1 lh36 mb20">操作</view>
 					<view v-for="(action, idx) in getActions()" :key="idx">
-						<view class="action-btn flex-box" :class="{ bb: idx < getActions().length - 1 }"
+						<view class="action-btn flex-box" :class="[{ bb: idx < getActions().length - 1 }, 'action-' + action.type]"
 							@click="onAction(action.type)">
-							<view class="flex-grow-1 fs28 col1">{{ action.label }}</view>
-							<view class="fs24 col9">{{ action.desc }}</view>
+							<view class="action-icon-wrap" :class="'action-icon-' + action.type">
+								<text class="fs20 colf">{{ getActionIcon(action.type) }}</text>
+							</view>
+							<view class="flex-grow-1 ml15">
+								<view class="fs28 fwb" :class="'action-label-' + action.type">{{ action.label }}</view>
+								<view class="fs22 mt4" :class="'action-desc-' + action.type">{{ action.desc }}</view>
+							</view>
 							<image src="/static/icon/icon_right_gray.png" mode="aspectFill" class="cell-arrow ml15"></image>
 						</view>
 					</view>
 				</view>
 
 				<!-- 已结算标识 -->
-				<view class="box mb30 tc" v-if="orderInfo.state === 6">
+				<view class="jj-box mb30 tc" v-if="orderInfo.state === 6">
 					<view class="settled-badge">
 						<view class="fs30 fwb" style="color: #52C41A;">已结算</view>
 						<view class="fs24 col9 mt10">佣金已到账，保证金已退还</view>
@@ -254,14 +259,10 @@
 				countdownTimer: null,
 				showBonusDetail: false,
 				showRebateDetail: false,
-				bonusRules: [
-					{ title: '完成5单奖励', condition: '累计完成5笔结算订单', amount: 500, achieved: true },
-					{ title: '成交额达标奖', condition: '单笔订单成交额 ≥ ¥10,000', amount: 200, achieved: false },
-					{ title: '月度优秀居间人', condition: '本月结算订单 ≥ 10笔', amount: 1000, achieved: false }
-				],
+				bonusRules: [],
 				rebateInfo: {
-					companyName: '极速达物流',
-					rate: 2
+					companyName: '',
+					rate: 0
 				}
 			}
 		},
@@ -308,25 +309,22 @@
 					loading: false,
 					success: ret => {
 						this.orderInfo = Object.assign(this.orderInfo, ret.data);
+						if (ret.data.bonus_rules) {
+							this.bonusRules = ret.data.bonus_rules;
+						}
+						if (ret.data.rebate_info) {
+							this.rebateInfo = {
+								companyName: ret.data.rebate_info.company_name || '',
+								rate: ret.data.rebate_info.rate || 0
+							};
+						}
 						this.initCountdown();
 					},
 					fail: () => {
-						// 接口未就绪，使用URL参数中的Mock数据
-						this.initMockData();
 						this.initCountdown();
 						return false;
 					}
 				});
-			},
-
-			initMockData() {
-				// 根据状态补充Mock金额数据
-				if (!this.orderInfo.factoryBonus) {
-					this.orderInfo.factoryBonus = Math.round(this.orderInfo.commissionAmount * 0.05 * 100) / 100;
-				}
-				if (!this.orderInfo.logisticsRebate) {
-					this.orderInfo.logisticsRebate = Math.round(this.orderInfo.commissionAmount * 0.02 * 100) / 100;
-				}
 			},
 
 			initCountdown() {
@@ -442,6 +440,11 @@
 				return actions;
 			},
 
+			getActionIcon(type) {
+				const map = { deposit: '付', contract: '传', logistics: '物', urge: '催' };
+				return map[type] || '';
+			},
+
 			getTipText() {
 				const map = {
 					1: '保证金将冻结至托管账户，履约完成后全额退还。逾期未上传合同，保证金将自动划转给工厂。',
@@ -528,29 +531,12 @@
 			goLogisticsRebate() {
 				this.showRebateDetail = !this.showRebateDetail;
 				this.showBonusDetail = false;
-			},
-
-			formatPrice(price) {
-				if (!price && price !== 0) return '0.00';
-				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			}
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
 	/* 状态横幅 */
 	.status-banner {
 		border-radius: 20rpx;
@@ -585,10 +571,6 @@
 
 	.banner-0 {
 		background: linear-gradient(135deg, #BFBFBF, #8C8C8C);
-	}
-
-	.colf {
-		color: #FFFFFF;
 	}
 
 	/* 佣金锁定横幅 */
@@ -715,6 +697,78 @@
 		align-items: center;
 	}
 
+	.action-icon-wrap {
+		width: 48rpx;
+		height: 48rpx;
+		border-radius: 10rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	/* 缴纳保证金 - 金色/橙色 */
+	.action-icon-deposit {
+		background: linear-gradient(135deg, #FAAD14, #FA8C16);
+	}
+
+	.action-label-deposit {
+		color: #FA8C16;
+	}
+
+	.action-desc-deposit {
+		color: #FAAD14;
+	}
+
+	/* 上传合同 - 主题橙色 */
+	.action-icon-contract {
+		background: linear-gradient(135deg, #FE4B01, #FF8C00);
+		animation: pulse-glow 2s ease-in-out infinite;
+	}
+
+	.action-label-contract {
+		color: #FE4B01;
+	}
+
+	.action-desc-contract {
+		color: #FF8C00;
+	}
+
+	/* 查看物流 - 绿色 */
+	.action-icon-logistics {
+		background: linear-gradient(135deg, #52C41A, #389E0D);
+	}
+
+	.action-label-logistics {
+		color: #52C41A;
+	}
+
+	.action-desc-logistics {
+		color: #73D13D;
+	}
+
+	/* 催促工厂 - 蓝色 */
+	.action-icon-urge {
+		background: linear-gradient(135deg, #1890FF, #096DD9);
+	}
+
+	.action-label-urge {
+		color: #1890FF;
+	}
+
+	.action-desc-urge {
+		color: #40A9FF;
+	}
+
+	@keyframes pulse-glow {
+		0%, 100% {
+			box-shadow: 0 0 0 0 rgba(254, 75, 1, 0.3);
+		}
+		50% {
+			box-shadow: 0 0 0 8rpx rgba(254, 75, 1, 0);
+		}
+	}
+
 	.detail-clickable {
 		align-items: center;
 	}
@@ -744,17 +798,6 @@
 
 	/* PC 端适配 */
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.status-banner {
 			padding: 32px 24px;
 			border-radius: 12px;

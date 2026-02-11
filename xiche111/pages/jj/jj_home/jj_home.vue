@@ -9,7 +9,7 @@
 				<!-- 用户信息 -->
 				<view class="box mb30">
 					<view class="flex-box">
-						<image class="avatar" src="/static/icon/icon_foot5_sc.png" mode="aspectFill"></image>
+						<image class="avatar" :src="userAvatar" mode="aspectFill"></image>
 						<view class="ml20 flex-grow-1">
 							<view class="fs34 fwb col1">居间人昵称</view>
 							<view class="fs24 col9 mt10">信誉评分: 85分</view>
@@ -28,11 +28,11 @@
 				<!-- 收入卡片 -->
 				<view class="income-row mb30">
 					<view class="income-card box">
-						<view class="fs24 col9">待结算</view>
+						<view class="fs24 col9">待结算(单位:元)</view>
 						<view class="income-amount col4">¥12,580</view>
 					</view>
 					<view class="income-card box">
-						<view class="fs24 col9">本月已结算</view>
+						<view class="fs24 col9">本月已结算(单位:元)</view>
 						<view class="income-amount col1">¥8,320</view>
 					</view>
 					<view class="income-card box">
@@ -76,13 +76,13 @@
 				<view class="box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">待办事项</view>
 					<view v-if="todoList.length === 0" class="fs28 col9 tc ptb30">暂无待办事项</view>
-					<view v-for="(item, idx) in todoList" :key="idx" class="todo-item flex-box" :class="{ 'bb': idx < todoList.length - 1 }">
+					<view v-for="(item, idx) in todoList" :key="idx" class="todo-item flex-box" :class="{ 'bb': idx < todoList.length - 1 }" @click="onTodoClick(item)">
 						<view class="todo-dot"></view>
 						<view class="flex-grow-1 ml15">
 							<view class="fs28 col1">{{ item.title }}</view>
 							<view class="fs24 col9 mt5">{{ item.desc }}</view>
 						</view>
-						<view class="fs24 col4">去处理</view>
+						<view class="fs24 col4">去处理 ></view>
 					</view>
 				</view>
 			</view>
@@ -136,14 +136,16 @@
 					}
 				],
 				todoList: [
-					{ title: '缴纳履约保证金', desc: '完成保证金缴纳后可接单' },
-					{ title: '完善个人资料', desc: '补充详细信息提升信誉评分' },
-					{ title: '查看新手指南', desc: '了解平台规则和操作流程' }
-				]
+					{ type: 'pending_deposit', title: '缴纳履约保证金', desc: '完成保证金缴纳后可接单' },
+					{ type: 'profile', title: '完善个人资料', desc: '补充详细信息提升信誉评分' },
+					{ type: 'guide', title: '查看新手指南', desc: '了解平台规则和操作流程' }
+				],
+				userAvatar: '/static/icon/icon_foot5_sc.png'
 			}
 		},
 		onReady() {
 			this.drawRadar();
+			this.loadAvatar();
 		},
 		onShow() {
 			// #ifdef H5
@@ -153,14 +155,28 @@
 			// #endif
 		},
 		methods: {
+			loadAvatar() {
+				this.$core.get({
+					url: 'xiluxc.jj_agent/dashboard',
+					loading: false,
+					success: ret => {
+						let d = ret.data;
+						if (d.profile && d.profile.avatar) {
+							this.userAvatar = d.profile.avatar;
+						}
+					},
+					fail: () => { return false; }
+				});
+			},
 			drawRadar() {
 				const ctx = uni.createCanvasContext('radarChart', this);
 				const centerX = 140;
-				const centerY = 140;
-				const radius = 100;
+				const centerY = 135;
+				const radius = 90;
 				const sides = 6;
 				const labels = ['履约率', '成交额', '客户评价', '响应速度', '沟通能力', '专业领域'];
-				const values = [0.8, 0.6, 0.9, 0.7, 0.85, 0.75];
+				const rawScores = [80, 60, 90, 70, 85, 75];
+				const values = rawScores.map(v => v / 100);
 
 				// 绘制背景网格（5层同心六边形）
 				for (let level = 1; level <= 5; level++) {
@@ -219,30 +235,47 @@
 					ctx.fill();
 				}
 
-				// 绘制标签
-				ctx.setFontSize(11);
-				ctx.setFillStyle('#666666');
+				// 绘制标签和数值
 				for (let i = 0; i < sides; i++) {
 					const angle = (Math.PI * 2 / sides) * i - Math.PI / 2;
-					const labelR = radius + 18;
+					const labelR = radius + 25;
 					const x = centerX + labelR * Math.cos(angle);
 					const y = centerY + labelR * Math.sin(angle);
 
 					ctx.setTextAlign('center');
 					ctx.setTextBaseline('middle');
 
-					// 根据位置微调
+					let offsetY = 0;
 					if (i === 0) {
 						ctx.setTextBaseline('bottom');
+						offsetY = -8;
 					} else if (i === 3) {
 						ctx.setTextBaseline('top');
+						offsetY = 8;
 					} else if (i === 1 || i === 2) {
 						ctx.setTextAlign('left');
 					} else if (i === 4 || i === 5) {
 						ctx.setTextAlign('right');
 					}
 
-					ctx.fillText(labels[i], x, y);
+					// 标签名称
+					ctx.setFontSize(11);
+					ctx.setFillStyle('#666666');
+					ctx.fillText(labels[i], x, y + offsetY);
+
+					// 数值
+					ctx.setFontSize(12);
+					ctx.setFillStyle('#FE4B01');
+					ctx.setTextBaseline('top');
+					let scoreY = y + offsetY;
+					if (i === 0) {
+						scoreY = y + 4;
+					} else if (i === 3) {
+						scoreY = y + offsetY + 15;
+					} else {
+						scoreY = y + offsetY + 15;
+					}
+					ctx.fillText(rawScores[i] + '分', x, scoreY);
 				}
 
 				ctx.draw();
@@ -256,6 +289,22 @@
 				};
 				if (routes[type]) {
 					uni.redirectTo({ url: routes[type] });
+				} else {
+					uni.showToast({ title: '功能开发中', icon: 'none' });
+				}
+			},
+			onTodoClick(item) {
+				const todoRoutes = {
+					'pending_deposit': '/pages/jj/jj_orders/jj_orders?status=1',
+					'pending_contract': '/pages/jj/jj_orders/jj_orders?status=3',
+					'executing': '/pages/jj/jj_orders/jj_orders?status=4',
+					'pending_settle': '/pages/jj/jj_orders/jj_orders?status=6',
+					'profile': '/pages/jj/jj_profile/jj_profile',
+					'guide': ''
+				};
+				let url = todoRoutes[item.type];
+				if (url) {
+					uni.navigateTo({ url: url });
 				} else {
 					uni.showToast({ title: '功能开发中', icon: 'none' });
 				}
@@ -293,7 +342,7 @@
 
 	.radar-canvas {
 		width: 280px;
-		height: 280px;
+		height: 310px;
 	}
 
 	/* 收入卡片 */

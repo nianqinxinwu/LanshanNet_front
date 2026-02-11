@@ -6,9 +6,9 @@
 			</view>
 		</view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 居间人类别选择 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb30">选择认证类型</view>
 					<view class="flex-box mb20" @click="agentType = 1">
 						<image :src="'/static/icon/'+(agentType == 1 ? 'choose_sc' : 'choose_uc')+'.png'" mode="aspectFill" class="ico34"></image>
@@ -21,7 +21,7 @@
 				</view>
 
 				<!-- 手机验证 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="inp_nav flex-box col1 fs30 bb">
 						<view class="col5 label">手机号</view>
 						<input type="text" class="flex-grow-1 tr" disabled :value="mobile" placeholder-class="cola" />
@@ -34,7 +34,7 @@
 				</view>
 
 				<!-- 身份证信息（个人/公司共用） -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb30">身份证信息</view>
 					<view class="mb20">
 						<view class="col5 fs28 mb10">身份证正面</view>
@@ -51,7 +51,7 @@
 				</view>
 
 				<!-- 公司居间人：营业执照 -->
-				<view v-if="agentType == 2" class="box mb30">
+				<view v-if="agentType == 2" class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb30">企业信息</view>
 					<view>
 						<view class="col5 fs28 mb10">营业执照</view>
@@ -163,13 +163,6 @@
 					}
 				});
 			},
-			// 打开协议
-			openAgreement(type) {
-				let id = getApp().globalData.config[type] || 0;
-				uni.navigateTo({
-					url: '/pages/rich_mp/rich_mp?id=' + id
-				});
-			},
 			// 提交认证
 			onSubmit() {
 				if (!this.isAgree) {
@@ -179,14 +172,14 @@
 
 				let formData = {
 					agentType: this.agentType,
-					mobile: this.mobile,
-					code: this.code,
+					phoneNumber: this.mobile,
+					smsCode: this.code,
 					idCardFrontImgUrl: this.idCardFrontImgUrl,
 					idCardBackImgUrl: this.idCardBackImgUrl
 				};
 
 				let rule = [
-					{ name: 'code', nameChn: '验证码', rules: ['require'], errorMsg: { require: '请输入验证码' } },
+					{ name: 'smsCode', nameChn: '验证码', rules: ['require'], errorMsg: { require: '请输入验证码' } },
 					{ name: 'idCardFrontImgUrl', nameChn: '身份证正面', rules: ['require'], errorMsg: { require: '请上传身份证正面照片' } },
 					{ name: 'idCardBackImgUrl', nameChn: '身份证反面', rules: ['require'], errorMsg: { require: '请上传身份证反面照片' } }
 				];
@@ -223,25 +216,8 @@
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
 	/* PC端宽屏适配 */
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.inp_nav {
 			height: auto;
 			padding: 14px 0;
@@ -268,12 +244,6 @@
 		.agree-ico {
 			cursor: pointer;
 		}
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
 	}
 
 	.inp_nav {

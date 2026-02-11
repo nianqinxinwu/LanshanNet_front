@@ -1,7 +1,7 @@
 <template>
 	<view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 红包汇总 -->
 				<view class="red-header mb30">
 					<view class="tc">
@@ -27,7 +27,7 @@
 				</view>
 
 				<!-- 红包规则 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">红包规则</view>
 					<view class="rule-item flex-box mb15" v-for="(item, idx) in ruleList" :key="idx">
 						<view class="rule-dot"></view>
@@ -42,7 +42,7 @@
 				</scroll-view>
 
 				<!-- 红包记录列表 -->
-				<view class="box mb30 packet-item" v-for="(item, index) in packetList" :key="item.id">
+				<view class="jj-box mb30 packet-item" v-for="(item, index) in packetList" :key="item.id">
 					<view class="flex-box">
 						<view class="packet-icon-wrap">
 							<text class="fs28 colf">¥</text>
@@ -53,8 +53,8 @@
 							<view class="fs22 col9 mt5">{{ item.time }}</view>
 						</view>
 						<view class="tr">
-							<view class="status-label fs22" :class="item.status === 'received' ? 'status-received' : 'status-pending'">
-								{{ item.status === 'received' ? '已到账' : '待发放' }}
+							<view class="status-label fs22" :class="item.status === 'claimed' ? 'status-received' : 'status-pending'">
+								{{ item.status === 'claimed' ? '已到账' : '待发放' }}
 							</view>
 						</view>
 					</view>
@@ -75,31 +75,19 @@
 </template>
 
 <script>
-	// Mock 红包数据
-	const MOCK_PACKETS = [
-		{ id: 1, orderNo: 'JJ202602080001', amount: 50.00, status: 'pending', time: '2026-02-08 10:30' },
-		{ id: 2, orderNo: 'JJ202602070002', amount: 50.00, status: 'pending', time: '2026-02-07 14:20' },
-		{ id: 3, orderNo: 'JJ202602030003', amount: 50.00, status: 'received', time: '2026-02-03 09:15' },
-		{ id: 4, orderNo: 'JJ202601280004', amount: 50.00, status: 'received', time: '2026-01-28 16:40' },
-		{ id: 5, orderNo: 'JJ202601200005', amount: 50.00, status: 'received', time: '2026-01-20 11:00' },
-		{ id: 6, orderNo: 'JJ202601150006', amount: 50.00, status: 'received', time: '2026-01-15 08:50' },
-		{ id: 7, orderNo: 'JJ202601100007', amount: 50.00, status: 'received', time: '2026-01-10 13:30' },
-		{ id: 8, orderNo: 'JJ202601050008', amount: 50.00, status: 'received', time: '2026-01-05 15:10' }
-	];
-
 	export default {
 		data() {
 			return {
 				summary: {
-					totalAmount: 400.00,
-					totalOrders: 8,
-					perOrderAmount: 50.00,
-					monthAmount: 100.00
+					totalAmount: 0,
+					totalOrders: 0,
+					perOrderAmount: 0,
+					monthAmount: 0
 				},
 				tabList: [
 					{ label: '全部', value: 'all' },
-					{ label: '待发放', value: 'pending' },
-					{ label: '已到账', value: 'received' }
+					{ label: '待发放', value: 'unclaimed' },
+					{ label: '已到账', value: 'claimed' }
 				],
 				currentTab: 'all',
 				ruleList: [
@@ -142,27 +130,23 @@
 					},
 					loading: false,
 					success: ret => {
-						let list = ret.data.list || ret.data || [];
+						let rawList = (ret.data.list && ret.data.list.data) || ret.data.list || ret.data || [];
+						// 映射后端字段到前端格式
+						let list = Array.isArray(rawList) ? rawList.map(item => ({
+							id: item.id,
+							orderNo: item.order_no || item.orderNo,
+							amount: item.amount,
+							status: item.status == 1 ? 'claimed' : 'unclaimed',
+							time: item.createtime ? new Date(item.createtime * 1000).toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(/\//g, '-') : (item.time || '')
+						})) : [];
 						this.handleListData(list);
 					},
 					fail: () => {
-						this.loadMockData();
+						this.moreButton.loading = false;
+						this.moreButton.text = '加载失败，点击重试';
 						return false;
 					}
 				});
-			},
-
-			loadMockData() {
-				setTimeout(() => {
-					let filtered = [...MOCK_PACKETS];
-					if (this.currentTab !== 'all') {
-						filtered = filtered.filter(item => item.status === this.currentTab);
-					}
-					const pageSize = 10;
-					const start = (this.moreButton.page - 1) * pageSize;
-					const pageData = filtered.slice(start, start + pageSize);
-					this.handleListData(pageData);
-				}, 300);
 			},
 
 			handleListData(list) {
@@ -187,31 +171,12 @@
 				this.packetList = [];
 				this.moreButton = { page: 1, loading: false, text: '加载更多', nomore: false, nothing: false };
 				this.loadList();
-			},
-
-			formatPrice(price) {
-				if (!price && price !== 0) return '0.00';
-				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			}
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
-	.colf { color: #FFFFFF; }
-
 	/* 红包头部 */
 	.red-header {
 		background: linear-gradient(135deg, #FF4D4F, #FF7875);
@@ -317,17 +282,6 @@
 	}
 
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.red-header {
 			padding: 32px 24px;
 			border-radius: 12px;

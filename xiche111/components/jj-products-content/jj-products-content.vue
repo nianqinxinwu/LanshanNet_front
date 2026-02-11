@@ -69,22 +69,6 @@
 </template>
 
 <script>
-	// Mock 商品数据
-	const MOCK_PRODUCTS = [
-		{ id: 1, name: '高强度螺纹钢 HRB400', categoryId: 1, categoryName: '建材', coverImage: '/static/images/icon_upload_logo.png', price: 4280.00, unit: '吨', commission: 3.5, stock: 500, factoryName: '鑫达钢铁有限公司', factoryRate: 96, craftStandard: 'GB/T 1499.2-2018', status: 1 },
-		{ id: 2, name: '聚氯乙烯树脂 SG-5', categoryId: 2, categoryName: '化工', coverImage: '/static/images/icon_upload_logo.png', price: 6850.00, unit: '吨', commission: 4.2, stock: 200, factoryName: '华源化工集团', factoryRate: 92, craftStandard: 'GB/T 5761-2006', status: 1 },
-		{ id: 3, name: 'CNC精密加工中心 VMC850', categoryId: 3, categoryName: '机械', coverImage: '/static/images/icon_upload_logo.png', price: 185000.00, unit: '台', commission: 2.0, stock: 15, factoryName: '精锐数控设备厂', factoryRate: 98, craftStandard: 'JB/T 8801.4', status: 1 },
-		{ id: 4, name: '工业级连接器 DB25', categoryId: 4, categoryName: '电子', coverImage: '/static/images/icon_upload_logo.png', price: 12.50, unit: '个', commission: 8.0, stock: 50000, factoryName: '联创电子科技', factoryRate: 94, craftStandard: 'GB/T 11918', status: 1 },
-		{ id: 5, name: '涤纶长丝 DTY 150D/48F', categoryId: 5, categoryName: '纺织', coverImage: '/static/images/icon_upload_logo.png', price: 8900.00, unit: '吨', commission: 3.0, stock: 300, factoryName: '恒通纺织集团', factoryRate: 90, craftStandard: 'FZ/T 54007', status: 1 },
-		{ id: 6, name: '普通硅酸盐水泥 P.O 42.5', categoryId: 1, categoryName: '建材', coverImage: '/static/images/icon_upload_logo.png', price: 480.00, unit: '吨', commission: 2.5, stock: 2000, factoryName: '华润水泥有限公司', factoryRate: 97, craftStandard: 'GB 175-2007', status: 1 },
-		{ id: 7, name: '环氧树脂 E-51', categoryId: 2, categoryName: '化工', coverImage: '/static/images/icon_upload_logo.png', price: 22000.00, unit: '吨', commission: 5.0, stock: 80, factoryName: '巴陵石化', factoryRate: 95, craftStandard: 'GB/T 13657', status: 1 },
-		{ id: 8, name: '液压油缸 HOB-63/35', categoryId: 3, categoryName: '机械', coverImage: '/static/images/icon_upload_logo.png', price: 1280.00, unit: '台', commission: 6.5, stock: 120, factoryName: '力源液压设备厂', factoryRate: 91, craftStandard: 'GB/T 15622', status: 1 },
-		{ id: 9, name: 'LED工业照明灯 200W', categoryId: 4, categoryName: '电子', coverImage: '/static/images/icon_upload_logo.png', price: 320.00, unit: '套', commission: 7.0, stock: 3000, factoryName: '光盛照明科技', factoryRate: 93, craftStandard: 'GB/T 24908', status: 1 },
-		{ id: 10, name: '全棉坯布 40s×40s', categoryId: 5, categoryName: '纺织', coverImage: '/static/images/icon_upload_logo.png', price: 15.80, unit: '米', commission: 4.0, stock: 100000, factoryName: '鲁泰纺织', factoryRate: 96, craftStandard: 'FZ/T 13001', status: 1 },
-		{ id: 11, name: '镀锌方管 40×40×2.0', categoryId: 1, categoryName: '建材', coverImage: '/static/images/icon_upload_logo.png', price: 5200.00, unit: '吨', commission: 3.2, stock: 350, factoryName: '天津钢管集团', factoryRate: 94, craftStandard: 'GB/T 3094', status: 1 },
-		{ id: 12, name: '丙烯酸乳液 BA-35', categoryId: 2, categoryName: '化工', coverImage: '/static/images/icon_upload_logo.png', price: 9800.00, unit: '吨', commission: 4.5, stock: 150, factoryName: '万华化学', factoryRate: 97, craftStandard: 'HG/T 4567', status: 1 },
-	];
-
 	export default {
 		name: 'jj-products-content',
 		data() {
@@ -108,62 +92,72 @@
 			this.loadProducts();
 		},
 		methods: {
-			// 获取筛选后的Mock数据
-			getFilteredProducts() {
-				let list = [...MOCK_PRODUCTS];
-
-				// 分类筛选
-				if (this.currentCategory !== 0) {
-					list = list.filter(item => item.categoryId === this.currentCategory);
-				}
-
-				// 关键词搜索
-				if (this.keyword) {
-					const kw = this.keyword.toLowerCase();
-					list = list.filter(item =>
-						item.name.toLowerCase().includes(kw) ||
-						item.factoryName.toLowerCase().includes(kw)
-					);
-				}
-
-				// 排序
-				if (this.sortType === 'commission_desc') {
-					list.sort((a, b) => b.commission - a.commission);
-				} else if (this.sortType === 'price_asc') {
-					list.sort((a, b) => a.price - b.price);
-				}
-
-				return list;
+			mapProduct(item) {
+				return {
+					id: item.id,
+					name: item.name,
+					categoryId: item.category_id || item.categoryId,
+					categoryName: item.category_name || item.categoryName,
+					coverImage: item.cover_image || item.coverImage || '/static/images/icon_upload_logo.png',
+					price: Number(item.price) || 0,
+					unit: item.unit,
+					commission: Number(item.commission_rate || item.commission) || 0,
+					stock: item.stock,
+					factoryName: (item.factory && item.factory.company_name) || item.factoryName || '',
+					factoryRate: (item.factory && Number(item.factory.fulfill_rate)) || item.factoryRate || 0,
+					craftStandard: item.craft_standard || item.craftStandard || '',
+					status: item.status
+				};
 			},
 
-			// 模拟分页加载
+			// 加载商品列表
 			loadProducts() {
 				if (this.moreButton.loading || this.moreButton.nomore) return;
 				this.moreButton.loading = true;
 				this.moreButton.text = '加载中...';
 
-				// 模拟网络延迟
-				setTimeout(() => {
-					const allFiltered = this.getFilteredProducts();
-					const pageSize = 10;
-					const start = (this.moreButton.page - 1) * pageSize;
-					const pageData = allFiltered.slice(start, start + pageSize);
-
-					if (pageData.length === 0 && this.moreButton.page === 1) {
-						this.moreButton.nothing = true;
-						this.moreButton.text = '暂无商品';
-					} else if (pageData.length < pageSize) {
-						this.productList = this.productList.concat(pageData);
-						this.moreButton.nomore = true;
-						this.moreButton.text = '—— 我是有底线的 ——';
-					} else {
-						this.productList = this.productList.concat(pageData);
-						this.moreButton.page += 1;
-						this.moreButton.text = '加载更多';
+				this.$core.get({
+					url: 'xiluxc.jj_product/index',
+					data: {
+						page: this.moreButton.page,
+						pagesize: 10,
+						category_id: this.currentCategory || '',
+						keyword: this.keyword || ''
+					},
+					loading: false,
+					success: ret => {
+						let rawList = ret.data.data || ret.data.list || ret.data || [];
+						let list = Array.isArray(rawList) ? rawList.map(item => this.mapProduct(item)) : [];
+						// 本地排序（后端暂不支持排序参数）
+						if (this.sortType === 'commission_desc') {
+							list.sort((a, b) => b.commission - a.commission);
+						} else if (this.sortType === 'price_asc') {
+							list.sort((a, b) => a.price - b.price);
+						}
+						this.handleListData(list);
+					},
+					fail: () => {
+						this.moreButton.loading = false;
+						this.moreButton.text = '加载失败，点击重试';
+						return false;
 					}
+				});
+			},
 
-					this.moreButton.loading = false;
-				}, 300);
+			handleListData(list) {
+				if (list.length === 0 && this.moreButton.page === 1) {
+					this.moreButton.nothing = true;
+					this.moreButton.text = '暂无商品';
+				} else if (list.length < 10) {
+					this.productList = this.productList.concat(list);
+					this.moreButton.nomore = true;
+					this.moreButton.text = '—— 我是有底线的 ——';
+				} else {
+					this.productList = this.productList.concat(list);
+					this.moreButton.page += 1;
+					this.moreButton.text = '加载更多';
+				}
+				this.moreButton.loading = false;
 			},
 
 			// 切换分类

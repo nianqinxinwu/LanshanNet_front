@@ -1,5 +1,14 @@
 <template>
 	<view class="orders-content">
+		<!-- 搜索栏 -->
+		<view class="search-bar mb20">
+			<view class="search-inner flex-box">
+				<image src="/static/icon/icon_search.png" mode="aspectFill" class="search-icon"></image>
+				<input type="text" class="search-input flex-grow-1" v-model="keyword" placeholder="搜索订单号/商品名/买家企业" placeholder-class="cola" confirm-type="search" @confirm="onSearch" />
+				<view v-if="keyword" class="search-clear fs24" @click="onClearSearch">清除</view>
+			</view>
+		</view>
+
 		<!-- 状态Tab -->
 		<scroll-view scroll-x="true" class="tab-nav mb30">
 			<view class="tab-item" :class="{ active: currentTab === item.value }" v-for="(item, index) in tabList"
@@ -44,108 +53,11 @@
 </template>
 
 <script>
-	// Mock 订单数据
-	const MOCK_ORDERS = [
-		{
-			id: 1001,
-			orderNo: 'JJ202602080001',
-			productName: '高强度螺纹钢 HRB400',
-			coverImage: '/static/images/icon_upload_logo.png',
-			companyName: '鑫达建设有限公司',
-			commissionAmount: 14980.00,
-			state: 1,
-			depositRate: 10,
-			commission: 3.5,
-			createTime: '2026-02-08 10:30:00'
-		},
-		{
-			id: 1002,
-			orderNo: 'JJ202602070002',
-			productName: '聚氯乙烯树脂 SG-5',
-			coverImage: '/static/images/icon_upload_logo.png',
-			companyName: '华源化工采购部',
-			commissionAmount: 28770.00,
-			state: 3,
-			depositRate: 10,
-			commission: 4.2,
-			createTime: '2026-02-07 14:20:00'
-		},
-		{
-			id: 1003,
-			orderNo: 'JJ202602060003',
-			productName: 'CNC精密加工中心 VMC850',
-			coverImage: '/static/images/icon_upload_logo.png',
-			companyName: '精锐机械制造厂',
-			commissionAmount: 3700.00,
-			state: 4,
-			depositRate: 10,
-			commission: 2.0,
-			createTime: '2026-02-06 09:15:00'
-		},
-		{
-			id: 1004,
-			orderNo: 'JJ202602050004',
-			productName: '工业级连接器 DB25',
-			coverImage: '/static/images/icon_upload_logo.png',
-			companyName: '联创电子科技',
-			commissionAmount: 5000.00,
-			state: 4,
-			depositRate: 10,
-			commission: 8.0,
-			createTime: '2026-02-05 16:40:00'
-		},
-		{
-			id: 1005,
-			orderNo: 'JJ202602040005',
-			productName: '涤纶长丝 DTY 150D/48F',
-			coverImage: '/static/images/icon_upload_logo.png',
-			companyName: '恒通纺织集团',
-			commissionAmount: 26700.00,
-			state: 5,
-			depositRate: 10,
-			commission: 3.0,
-			createTime: '2026-02-04 11:00:00'
-		},
-		{
-			id: 1006,
-			orderNo: 'JJ202602030006',
-			productName: '普通硅酸盐水泥 P.O 42.5',
-			coverImage: '/static/images/icon_upload_logo.png',
-			companyName: '华润建材采购',
-			commissionAmount: 12000.00,
-			state: 6,
-			depositRate: 10,
-			commission: 2.5,
-			createTime: '2026-02-03 08:50:00'
-		},
-		{
-			id: 1007,
-			orderNo: 'JJ202602020007',
-			productName: '环氧树脂 E-51',
-			coverImage: '/static/images/icon_upload_logo.png',
-			companyName: '巴陵石化采购部',
-			commissionAmount: 110000.00,
-			state: 6,
-			depositRate: 10,
-			commission: 5.0,
-			createTime: '2026-02-02 13:30:00'
-		},
-		{
-			id: 1008,
-			orderNo: 'JJ202602010008',
-			productName: '液压油缸 HOB-63/35',
-			coverImage: '/static/images/icon_upload_logo.png',
-			companyName: '力源液压设备采购',
-			commissionAmount: 8320.00,
-			state: 1,
-			depositRate: 10,
-			commission: 6.5,
-			createTime: '2026-02-01 15:10:00'
-		}
-	];
-
 	export default {
 		name: 'jj-orders-content',
+		props: {
+			initTab: { type: [String, Number], default: 'all' }
+		},
 		data() {
 			return {
 				tabList: [
@@ -156,11 +68,15 @@
 					{ label: '已结算', value: 6 }
 				],
 				currentTab: 'all',
+				keyword: '',
 				orderList: [],
 				moreButton: { page: 1, loading: false, text: '加载更多', nomore: false, nothing: false }
 			}
 		},
 		mounted() {
+			if (this.initTab !== 'all') {
+				this.currentTab = Number(this.initTab) || 'all';
+			}
 			this.loadOrders();
 		},
 		methods: {
@@ -190,22 +106,7 @@
 				return map[state] || '';
 			},
 
-			// 获取筛选后的Mock数据
-			getFilteredOrders() {
-				let list = [...MOCK_ORDERS];
-				if (this.currentTab !== 'all') {
-					let tabValue = this.currentTab;
-					if (tabValue === 4) {
-						// 履约中 tab 包含状态4和5
-						list = list.filter(item => item.state === 4 || item.state === 5);
-					} else {
-						list = list.filter(item => item.state === tabValue);
-					}
-				}
-				return list;
-			},
-
-			// 模拟分页加载
+			// 加载订单列表
 			loadOrders() {
 				if (this.moreButton.loading || this.moreButton.nomore) return;
 				this.moreButton.loading = true;
@@ -213,15 +114,29 @@
 
 				// 尝试调接口
 				this.$core.get({
-					url: 'xiluxc.jj_order/list',
+					url: 'xiluxc.jj_order/index',
 					data: {
 						page: this.moreButton.page,
 						pagesize: 10,
-						state: this.currentTab === 'all' ? '' : this.currentTab
+						status: this.currentTab === 'all' ? '' : this.currentTab,
+						keyword: this.keyword
 					},
 					loading: false,
 					success: ret => {
-						let list = ret.data.list || ret.data || [];
+						let rawList = ret.data.data || ret.data.list || ret.data || [];
+						// 映射后端 snake_case 字段到前端 camelCase
+						let list = Array.isArray(rawList) ? rawList.map(item => ({
+							id: item.id,
+							orderNo: item.order_sn || item.orderNo,
+							productName: item.product_name || item.productName,
+							coverImage: item.cover_image || item.coverImage || '/static/images/icon_upload_logo.png',
+							companyName: item.buyer_company || item.companyName,
+							commissionAmount: item.commission_amount || item.commissionAmount,
+							state: item.status !== undefined ? item.status : item.state,
+							depositRate: item.deposit_rate || item.depositRate,
+							commission: item.commission_rate || item.commission,
+							createTime: item.createtime ? new Date(item.createtime * 1000).toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(/\//g, '-') : (item.createTime || '')
+						})) : [];
 						if (list.length === 0 && this.moreButton.page === 1) {
 							this.moreButton.nothing = true;
 							this.moreButton.text = '暂无订单';
@@ -237,36 +152,11 @@
 						this.moreButton.loading = false;
 					},
 					fail: () => {
-						// 接口未就绪，使用Mock数据
-						this.loadMockOrders();
+						this.moreButton.loading = false;
+						this.moreButton.text = '加载失败，点击重试';
 						return false;
 					}
 				});
-			},
-
-			// Mock数据分页加载
-			loadMockOrders() {
-				setTimeout(() => {
-					const allFiltered = this.getFilteredOrders();
-					const pageSize = 10;
-					const start = (this.moreButton.page - 1) * pageSize;
-					const pageData = allFiltered.slice(start, start + pageSize);
-
-					if (pageData.length === 0 && this.moreButton.page === 1) {
-						this.moreButton.nothing = true;
-						this.moreButton.text = '暂无订单';
-					} else if (pageData.length < pageSize) {
-						this.orderList = this.orderList.concat(pageData);
-						this.moreButton.nomore = true;
-						this.moreButton.text = '—— 我是有底线的 ——';
-					} else {
-						this.orderList = this.orderList.concat(pageData);
-						this.moreButton.page += 1;
-						this.moreButton.text = '加载更多';
-					}
-
-					this.moreButton.loading = false;
-				}, 300);
 			},
 
 			// 切换Tab
@@ -343,6 +233,17 @@
 				}
 			},
 
+			// 搜索
+			onSearch() {
+				this.resetAndLoad();
+			},
+
+			// 清除搜索
+			onClearSearch() {
+				this.keyword = '';
+				this.resetAndLoad();
+			},
+
 			// 价格格式化
 			formatPrice(price) {
 				if (!price && price !== 0) return '0.00';
@@ -357,6 +258,39 @@
 		background: #FFFFFF;
 		border-radius: 20rpx;
 		padding: 30rpx;
+	}
+
+	.search-bar {
+		background: #FFFFFF;
+		border-radius: 20rpx;
+		padding: 20rpx 30rpx;
+	}
+
+	.search-inner {
+		background: #F5F7FB;
+		border-radius: 30rpx;
+		padding: 0 24rpx;
+		height: 68rpx;
+		align-items: center;
+	}
+
+	.search-icon {
+		width: 32rpx;
+		height: 32rpx;
+		flex-shrink: 0;
+		margin-right: 16rpx;
+	}
+
+	.search-input {
+		font-size: 26rpx;
+		height: 68rpx;
+		line-height: 68rpx;
+	}
+
+	.search-clear {
+		color: #999999;
+		flex-shrink: 0;
+		padding-left: 16rpx;
 	}
 
 	.tab-nav {
@@ -463,6 +397,38 @@
 	}
 
 	@media screen and (min-width: 768px) {
+		.search-bar {
+			border-radius: 12px;
+			padding: 14px 20px;
+			margin-bottom: 20px;
+		}
+
+		.search-inner {
+			border-radius: 20px;
+			padding: 0 16px;
+			height: 42px;
+		}
+
+		.search-icon {
+			width: 18px;
+			height: 18px;
+			margin-right: 10px;
+		}
+
+		.search-input {
+			font-size: 14px;
+			height: 42px;
+			line-height: 42px;
+		}
+
+		.search-clear {
+			cursor: pointer;
+
+			&:hover {
+				color: #FE4B01;
+			}
+		}
+
 		.box {
 			padding: 24px;
 			border-radius: 12px;

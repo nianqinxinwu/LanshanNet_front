@@ -7,7 +7,7 @@
 					<view class="input-box flex-box">
 						<image class="mr30" src="/static/icon/icon_phone.png" mode="aspectFill"></image>
 						<input class="flex-1 fs28" v-model="mobile" placeholder="请输入手机号" />
-						<view class="col-red fs28 ptb10" @click="getCode()">{{codeText}}</view>
+						<view class="fs28 ptb10" :style="{color: disabledCode ? '#999999' : '#FE4B01', whiteSpace: 'nowrap'}" @click="getCode()">{{codeText}}</view>
 					</view>
 					<view class="input-box flex-box">
 						<image class="mr30" src="/static/icon/icon_code.png" mode="aspectFill"></image>
@@ -64,7 +64,7 @@
 				logo: '',
 				mobile: '',
 				disabledCode: false,
-				codeText: '验证码',
+				codeText: '获取验证码',
 				code: '',
 				agree: true,
 				isAgree: true,
@@ -139,7 +139,7 @@
 					this.codeText = n + 's';
 					if (this.codeText < 0 + 's') {
 						this.disabledCode = false;
-						this.codeText = '验证码';
+						this.codeText = '获取验证码';
 					}
 				}, 1000);
 			},

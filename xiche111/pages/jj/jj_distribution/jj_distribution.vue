@@ -1,7 +1,7 @@
 <template>
 	<view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 邀请统计 -->
 				<view class="stats-card mb30">
 					<view class="flex-box">
@@ -18,7 +18,7 @@
 				</view>
 
 				<!-- 我的邀请码 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">我的邀请码</view>
 					<view class="code-box">
 						<view class="code-text">{{ inviteCode }}</view>
@@ -30,7 +30,7 @@
 				</view>
 
 				<!-- 邀请规则 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">邀请规则</view>
 					<view v-for="(rule, idx) in rules" :key="idx" class="rule-item flex-box mb15">
 						<view class="rule-dot">{{ idx + 1 }}</view>
@@ -39,7 +39,7 @@
 				</view>
 
 				<!-- 我的团队 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">我的团队</view>
 					<view v-if="teamList.length === 0" class="fs28 col9 tc ptb30">暂无团队成员</view>
 					<view v-for="(member, idx) in teamList" :key="idx" class="team-item flex-box" :class="{ 'bb': idx < teamList.length - 1 }">
@@ -64,24 +64,44 @@
 		data() {
 			return {
 				stats: {
-					inviteCount: 12,
-					teamRevenue: 28500.00
+					inviteCount: 0,
+					teamRevenue: 0
 				},
-				inviteCode: 'JJ2024ABC',
+				inviteCode: '',
 				rules: [
 					'邀请好友注册成为居间人，好友填写您的邀请码即可绑定',
 					'好友完成首单后，您可获得平台奖励佣金',
 					'团队每月业绩达标，享受额外团队奖金'
 				],
-				teamList: [
-					{ name: '张三', mobile: '138****1234', avatar: '', orderCount: 5 },
-					{ name: '李四', mobile: '139****5678', avatar: '', orderCount: 3 },
-					{ name: '王五', mobile: '137****9012', avatar: '', orderCount: 8 },
-					{ name: '赵六', mobile: '136****3456', avatar: '', orderCount: 1 }
-				]
+				teamList: []
 			}
 		},
+		onLoad() {
+			this.loadDistribution();
+		},
 		methods: {
+			loadDistribution() {
+				this.$core.get({
+					url: 'xiluxc.jj_distribution/index',
+					loading: true,
+					success: ret => {
+						let d = ret.data;
+						this.inviteCode = d.invite_code || '';
+						this.stats.inviteCount = d.invite_count || 0;
+						this.stats.teamRevenue = Number(d.team_revenue) || 0;
+						// 映射团队列表
+						if (d.team_list && Array.isArray(d.team_list)) {
+							this.teamList = d.team_list.map(item => ({
+								name: (item.inviteUser && item.inviteUser.nickname) || '用户' + item.invite_user_id,
+								mobile: (item.inviteUser && item.inviteUser.mobile) || '',
+								avatar: (item.inviteUser && item.inviteUser.avatar) || '',
+								orderCount: item.order_count || 0
+							}));
+						}
+					},
+					fail: () => { return false; }
+				});
+			},
 			copyCode() {
 				uni.setClipboardData({
 					data: this.inviteCode,
@@ -92,28 +112,12 @@
 			},
 			generatePoster() {
 				uni.showToast({ title: '功能开发中', icon: 'none' });
-			},
-			formatPrice(price) {
-				if (!price) return '0.00';
-				return price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			}
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
 	.stats-card {
 		background: linear-gradient(135deg, #FE4B01, #FF8C00);
 		border-radius: 20rpx;
@@ -194,17 +198,6 @@
 
 	/* PC端适配 */
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.stats-card {
 			padding: 30px 24px;
 			border-radius: 12px;

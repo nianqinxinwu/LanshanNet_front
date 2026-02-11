@@ -1,7 +1,7 @@
 <template>
 	<view>
 		<view class="container bg-f5">
-			<view class="page-wrap p30">
+			<view class="jj-page-wrap p30">
 				<!-- 奖池金额 -->
 				<view class="pool-header mb30">
 					<view class="tc">
@@ -17,7 +17,7 @@
 				</view>
 
 				<!-- 我的排名 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="flex-box flex-center">
 						<view class="my-rank-circle">
 							<view class="fs36 fwb colf">{{ myRank.rank > 0 ? myRank.rank : '-' }}</view>
@@ -38,7 +38,7 @@
 				</view>
 
 				<!-- 分配规则 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">分配规则</view>
 					<view class="rule-item flex-box mb15" v-for="(item, idx) in rules" :key="idx">
 						<view class="rule-dot"></view>
@@ -47,7 +47,7 @@
 				</view>
 
 				<!-- Top10 排行榜 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">Top 10 排行榜</view>
 
 					<!-- 表头 -->
@@ -82,7 +82,7 @@
 				</view>
 
 				<!-- 历史奖池 -->
-				<view class="box mb30">
+				<view class="jj-box mb30">
 					<view class="fs34 fwb col1 lh36 mb20">历史奖池</view>
 					<view v-for="(item, idx) in historyPools" :key="idx" class="history-pool-item"
 						:class="{ bb: idx < historyPools.length - 1 }">
@@ -109,14 +109,14 @@
 		data() {
 			return {
 				poolInfo: {
-					totalAmount: 50000.00,
-					startDate: '2026-02-03',
-					endDate: '2026-02-09'
+					totalAmount: 0,
+					startDate: '',
+					endDate: ''
 				},
 				myRank: {
-					rank: 5,
-					amount: 85000.00,
-					prize: 3200.00
+					rank: 0,
+					amount: 0,
+					prize: 0
 				},
 				rules: [
 					'奖池资金来源于平台服务费的 1%',
@@ -125,24 +125,8 @@
 					'奖金将在每周一自动发放至您的账户',
 					'成交额以实际完成结算的订单为准'
 				],
-				rankList: [
-					{ name: '张**', amount: 320000, prize: 12800, isMe: false },
-					{ name: '李**', amount: 256000, prize: 10240, isMe: false },
-					{ name: '王**', amount: 198000, prize: 7920, isMe: false },
-					{ name: '赵**', amount: 145000, prize: 5800, isMe: false },
-					{ name: '我', amount: 85000, prize: 3200, isMe: true },
-					{ name: '刘**', amount: 78000, prize: 3120, isMe: false },
-					{ name: '陈**', amount: 62000, prize: 2480, isMe: false },
-					{ name: '周**', amount: 45000, prize: 1800, isMe: false },
-					{ name: '吴**', amount: 32000, prize: 1280, isMe: false },
-					{ name: '孙**', amount: 21000, prize: 1360, isMe: false }
-				],
-				historyPools: [
-					{ period: '2026年第5周', totalAmount: 48000, myPrize: 2800, myRank: 6 },
-					{ period: '2026年第4周', totalAmount: 52000, myPrize: 4100, myRank: 4 },
-					{ period: '2026年第3周', totalAmount: 45000, myPrize: 0, myRank: 15 },
-					{ period: '2026年第2周', totalAmount: 39000, myPrize: 1800, myRank: 9 }
-				]
+				rankList: [],
+				historyPools: []
 			}
 		},
 		onLoad() {
@@ -155,45 +139,52 @@
 					loading: false,
 					success: ret => {
 						let data = ret.data;
-						if (data.pool_info) this.poolInfo = Object.assign(this.poolInfo, data.pool_info);
-						if (data.my_rank) this.myRank = Object.assign(this.myRank, data.my_rank);
-						if (data.rank_list) this.rankList = data.rank_list;
-						if (data.history_pools) this.historyPools = data.history_pools;
+						if (data.pool_info) {
+							this.poolInfo.totalAmount = Number(data.pool_info.total_amount) || 0;
+							this.poolInfo.startDate = data.pool_info.start_date || '';
+							this.poolInfo.endDate = data.pool_info.end_date || '';
+						}
+						if (data.my_rank) {
+							this.myRank.rank = data.my_rank.rank || 0;
+							this.myRank.amount = Number(data.my_rank.revenue_amount) || 0;
+							this.myRank.prize = Number(data.my_rank.prize_amount) || 0;
+						}
+						if (data.rank_list && data.rank_list.length > 0) {
+							let userId = this.$core.getUserId();
+							this.rankList = data.rank_list.map(item => ({
+								name: item.agent_id == userId ? '我' : (item.nickname ? item.nickname.substr(0, 1) + '**' : '用户'),
+								amount: Number(item.revenue_amount) || 0,
+								prize: Number(item.prize_amount) || 0,
+								isMe: item.agent_id == userId
+							}));
+						}
+						if (data.history_pools && data.history_pools.length > 0) {
+							this.historyPools = data.history_pools.map(pool => ({
+								period: pool.period || (pool.start_date + ' ~ ' + pool.end_date),
+								totalAmount: Number(pool.total_amount) || 0,
+								myPrize: Number(pool.my_prize) || 0,
+								myRank: pool.my_rank || 0
+							}));
+						}
 					},
 					fail: () => { return false; }
 				});
 			},
-
 			formatPrice(price) {
 				if (!price && price !== 0) return '0.00';
 				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			},
-
 			formatShortPrice(price) {
-				if (price >= 10000) {
-					return (price / 10000).toFixed(1) + '万';
-				}
-				return this.formatPrice(price);
+				if (!price && price !== 0) return '0';
+				let n = Number(price);
+				if (n >= 10000) return (n / 10000).toFixed(1) + '万';
+				return n.toLocaleString();
 			}
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
-	.page-wrap {
-		max-width: 750rpx;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.box {
-		background: #FFFFFF;
-		border-radius: 20rpx;
-		padding: 30rpx;
-	}
-
-	.colf { color: #FFFFFF; }
-
 	/* 奖池头部 */
 	.pool-header {
 		background: linear-gradient(135deg, #722ED1, #B37FEB);
@@ -277,17 +268,6 @@
 	}
 
 	@media screen and (min-width: 768px) {
-		.page-wrap {
-			max-width: 1200px;
-			padding: 30px;
-		}
-
-		.box {
-			padding: 24px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-		}
-
 		.pool-header {
 			padding: 32px 24px;
 			border-radius: 12px;
