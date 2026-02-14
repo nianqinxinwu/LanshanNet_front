@@ -36,7 +36,8 @@
 			appid: '',
 			// apiBaseUri: "https://xiche.zzlanshan.site/api",
 			// apiBaseUri: "http://localhost:8000/api",
-			apiBaseUri: "http://192.168.1.149:8000/api",
+			// apiBaseUri: "http://192.168.1.149:8000/api",
+			apiBaseUri: "http://192.168.3.236:8000/api",
 			//web目录
             webDir:'/web/',
 			////前端上传图片补全域名，如oss的https://xxxx.oss-cn-shanghai.aliyuncs.com，或https://your.site.com

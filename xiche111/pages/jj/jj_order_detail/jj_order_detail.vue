@@ -17,10 +17,25 @@
 						<image :src="orderInfo.coverImage" mode="aspectFill" class="product-thumb"></image>
 						<view class="flex-grow-1 ml20">
 							<view class="fs28 fwb col1 m-ellipsis">{{ orderInfo.productName }}</view>
-							<view class="mt10 fs24 col9">买家：{{ orderInfo.companyName }}</view>
-							<view class="mt10 fs24 col9">订单编号：{{ orderInfo.orderNo }}</view>
+							<view class="mt10 fs24 col9">厂家：{{ orderInfo.factoryName }}</view>
+							<view class="mt10 fs24 col9 flex-box" style="align-items:center;">
+								<text>订单编号：{{ orderInfo.orderNo }}</text>
+								<view class="copy-btn fs22" @click.stop="copyOrderNo">复制</view>
+							</view>
 							<view class="mt10 fs24 col9">下单时间：{{ orderInfo.createTime }}</view>
 						</view>
+					</view>
+					<view class="detail-row flex-box bb mt10">
+						<view class="col5 fs28">商品单价</view>
+						<view class="flex-grow-1 tr fs28 col1">¥{{ orderInfo.unitPrice }}</view>
+					</view>
+					<view class="detail-row flex-box bb">
+						<view class="col5 fs28">商品数量</view>
+						<view class="flex-grow-1 tr fs28 col1">{{ orderInfo.quantity }}</view>
+					</view>
+					<view class="detail-row flex-box">
+						<view class="col5 fs28">商品总价</view>
+						<view class="flex-grow-1 tr fs28 fwb col1">¥{{ orderInfo.totalAmount }}</view>
 					</view>
 				</view>
 
@@ -122,11 +137,29 @@
 					</view>
 				</view>
 
-				<!-- 履约倒计时（状态3/4时显示） -->
-				<view class="jj-box mb30" v-if="orderInfo.state === 3 || orderInfo.state === 4">
+				<!-- 合同驳回提示 -->
+				<view class="jj-box mb30 reject-banner" v-if="orderInfo.state === 3 && orderInfo.contractStatus === 4">
+					<view class="fs28 fwb" style="color:#FF4D4F;">合同已被驳回</view>
+					<view class="fs24 col9 mt10">原因：{{ orderInfo.contractRejectReason }}</view>
+					<view class="fs24 col9 mt5">请重新上传合同</view>
+				</view>
+
+				<!-- 合同已上传，等待工厂审核 -->
+				<view class="jj-box mb30" v-if="orderInfo.state === 3 && orderInfo.contractStatus === 1">
+					<view class="review-waiting-box tc">
+						<view class="review-waiting-icon">
+							<text class="fs28 colf">审</text>
+						</view>
+						<view class="fs30 fwb col1 mt20">合同已上传，等待工厂审核</view>
+						<view class="fs24 col9 mt10">工厂审核通过后将进入催款阶段</view>
+					</view>
+				</view>
+
+				<!-- 履约倒计时（状态3未上传合同 / 状态4未上传付款凭证时显示） -->
+				<view class="jj-box mb30" v-if="((orderInfo.state === 3 && orderInfo.contractStatus !== 1) || (orderInfo.state === 4 && !orderInfo.payment_proof)) && (countdownSeconds > 0 || countdownTimer)">
 					<view class="countdown-header flex-box">
 						<view class="fs34 fwb col1 lh36 flex-grow-1">
-							{{ orderInfo.state === 3 ? '合同上传倒计时' : '履约倒计时' }}
+							{{ orderInfo.state === 3 ? '合同上传倒计时' : '催款倒计时' }}
 						</view>
 						<view class="status-tag fs22" :class="orderInfo.state === 3 ? 'status-upload' : 'status-exec'">
 							{{ orderInfo.state === 3 ? '待上传' : '履约中' }}
@@ -134,6 +167,10 @@
 					</view>
 					<view class="countdown-box tc mt20">
 						<view class="countdown-time">
+							<template v-if="countdownDisplay.days > 0">
+								<text class="time-num">{{ countdownDisplay.days }}</text>
+								<text class="time-sep-text">天</text>
+							</template>
 							<text class="time-num">{{ countdownDisplay.hours }}</text>
 							<text class="time-sep">:</text>
 							<text class="time-num">{{ countdownDisplay.minutes }}</text>
@@ -141,7 +178,52 @@
 							<text class="time-num">{{ countdownDisplay.seconds }}</text>
 						</view>
 						<view class="fs24 col9 mt10">
-							{{ orderInfo.state === 3 ? '请在倒计时结束前上传正式买卖合同' : '履约完成后佣金将自动结算' }}
+							{{ orderInfo.state === 3 ? '请在倒计时结束前上传正式买卖合同' : '催款期结束后佣金将自动结算' }}
+						</view>
+					</view>
+				</view>
+
+				<!-- 付款凭证状态栏（state=4且已上传时显示） -->
+				<view class="jj-box mb30" v-if="orderInfo.state === 4 && orderInfo.payment_proof">
+					<view class="fs34 fwb col1 lh36 mb20">买家付款凭证</view>
+					<!-- 已上传待审核 -->
+					<view v-if="orderInfo.payment_proof.status === 0" class="proof-status-box">
+						<view class="proof-pending-icon tc">
+							<text class="fs28 colf">审</text>
+						</view>
+						<view class="fs28 col1 fwb mt15 tc">付款凭证已提交，等待工厂审核</view>
+						<view class="fs24 col9 mt10 tc">工厂审核通过后将安排发货</view>
+					</view>
+					<!-- 审核通过 -->
+					<view v-else-if="orderInfo.payment_proof.status === 1" class="proof-status-box">
+						<view class="proof-done-icon tc">
+							<text class="fs28 colf">✓</text>
+						</view>
+						<view class="fs28 col1 fwb mt15 tc">付款凭证已审核通过</view>
+						<view class="fs24 col9 mt10 tc">工厂正在安排发货</view>
+					</view>
+					<!-- 被驳回 -->
+					<view v-else-if="orderInfo.payment_proof.status === 2" class="proof-status-box">
+						<view class="proof-reject-icon tc">
+							<text class="fs28 colf">✕</text>
+						</view>
+						<view class="fs28 fwb mt15 tc" style="color:#FF4D4F;">付款凭证被驳回</view>
+						<view class="fs24 col9 mt10 tc" v-if="orderInfo.payment_proof.reject_reason">原因：{{ orderInfo.payment_proof.reject_reason }}</view>
+						<view class="proof-upload-btn mt20" @click="goPaymentProof">
+							<text class="fs28 colf">重新上传</text>
+						</view>
+					</view>
+
+					<!-- 凭证文件列表 -->
+					<view class="proof-file-list mt20" v-if="orderInfo.payment_proof.file_urls && orderInfo.payment_proof.file_urls.length">
+						<view class="fs26 col5 mb10">凭证文件</view>
+						<view class="proof-file-row flex-box mb10" v-for="(fileUrl, fIdx) in orderInfo.payment_proof.file_urls" :key="fIdx">
+							<view class="proof-file-icon-box">
+								<text class="fs20 colf">{{ isFilePdf(fileUrl) ? 'PDF' : '图' }}</text>
+							</view>
+							<view class="flex-grow-1 ml15 fs24 col1 m-ellipsis">{{ getFileNameFromUrl(fileUrl) }}</view>
+							<view class="fs24 col4 ml15" @click="previewProofFile(fileUrl)">查看</view>
+							<view class="fs24 ml15" style="color:#52C41A;" @click="downloadProofFile(fileUrl)">下载</view>
 						</view>
 					</view>
 				</view>
@@ -191,7 +273,7 @@
 							<view class="fs24 col9 mt5">{{ getLogisticsFlowDesc() }}</view>
 						</view>
 						<view class="flow-status fs24" :class="{ 'col-done': orderInfo.state >= 5 }">
-							{{ orderInfo.state >= 5 ? '已签收' : (orderInfo.state >= 4 ? '运输中' : '待发货') }}
+							{{ getLogisticsStatusText() }}
 						</view>
 						<image src="/static/icon/icon_right_gray.png" mode="aspectFill" class="cell-arrow ml10"></image>
 					</view>
@@ -243,7 +325,10 @@
 				orderInfo: {
 					productName: '',
 					coverImage: '/static/images/icon_upload_logo.png',
-					companyName: '',
+					factoryName: '',
+					unitPrice: '0.00',
+					quantity: 0,
+					totalAmount: '0.00',
 					orderNo: '',
 					createTime: '',
 					state: 0,
@@ -252,8 +337,12 @@
 					depositRate: 10,
 					factoryBonus: 0,
 					logisticsRebate: 0,
-					contractUploadHours: 24,
-					executionHours: 72
+					contractUploadHours: 0,
+					executionHours: 72,
+					paymentUrgeDeadline: 0,
+					contractDeadline: 0,
+					contractRejectReason: '',
+					contractStatus: 0
 				},
 				countdownSeconds: 0,
 				countdownTimer: null,
@@ -268,16 +357,18 @@
 		},
 		computed: {
 			totalAmount() {
-				return (this.orderInfo.commissionAmount || 0) +
-					(this.orderInfo.factoryBonus || 0) +
-					(this.orderInfo.logisticsRebate || 0);
+				return Number(this.orderInfo.commissionAmount || 0) +
+					Number(this.orderInfo.factoryBonus || 0) +
+					Number(this.orderInfo.logisticsRebate || 0);
 			},
 			countdownDisplay() {
 				let total = Math.max(0, this.countdownSeconds);
-				let hours = Math.floor(total / 3600);
+				let days = Math.floor(total / 86400);
+				let hours = Math.floor((total % 86400) / 3600);
 				let minutes = Math.floor((total % 3600) / 60);
 				let seconds = total % 60;
 				return {
+					days: days,
 					hours: String(hours).padStart(2, '0'),
 					minutes: String(minutes).padStart(2, '0'),
 					seconds: String(seconds).padStart(2, '0')
@@ -296,7 +387,14 @@
 					console.log('param parse error', e);
 				}
 			}
+			// param 中已有截止时间戳时立即启动倒计时
+			this.initCountdown();
 			this.loadOrderDetail();
+		},
+		onShow() {
+			if (this.orderId) {
+				this.loadOrderDetail();
+			}
 		},
 		onUnload() {
 			this.clearTimer();
@@ -321,20 +419,21 @@
 						this.initCountdown();
 					},
 					fail: () => {
-						this.initCountdown();
 						return false;
 					}
 				});
 			},
 
 			initCountdown() {
-				if (this.orderInfo.state === 3) {
-					this.countdownSeconds = (this.orderInfo.contractUploadHours || 24) * 3600;
+				let now = Math.floor(Date.now() / 1000);
+				if (this.orderInfo.state === 3 && this.orderInfo.contractDeadline && this.orderInfo.contractStatus !== 1) {
+					this.countdownSeconds = Math.max(0, this.orderInfo.contractDeadline - now);
 					this.startCountdown();
-				} else if (this.orderInfo.state === 4) {
-					this.countdownSeconds = (this.orderInfo.executionHours || 72) * 3600;
+				} else if (this.orderInfo.state === 4 && this.orderInfo.paymentUrgeDeadline) {
+					this.countdownSeconds = Math.max(0, this.orderInfo.paymentUrgeDeadline - now);
 					this.startCountdown();
 				}
+				// 合同已上传等待审核时不启动倒计时
 			},
 
 			startCountdown() {
@@ -367,7 +466,7 @@
 					this.orderInfo.state = 6;
 					uni.showModal({
 						title: '提示',
-						content: '履约期已结束，佣金已自动结算，保证金已退还。',
+						content: '催款期已结束，佣金已自动结算，保证金已退还。',
 						showCancel: false
 					});
 				}
@@ -391,17 +490,25 @@
 			getStatusBannerDesc(state) {
 				const map = {
 					1: '请尽快缴纳保证金以锁定佣金',
-					3: '请在规定时间内上传买卖合同',
-					4: '工厂正在处理订单，请耐心等待',
+					2: '等待工厂确认接单并缴纳佣金',
+					4: '催款期内请向买家催付货款',
 					5: '物流已签收，等待工厂确认放款',
 					6: '佣金已到账，感谢您的服务'
 				};
+				if (state === 3) {
+					return this.orderInfo.contractStatus === 1 ? '合同已上传，等待工厂审核' : '请在规定时间内上传买卖合同';
+				}
 				return map[state] || '';
 			},
 
 			getContractFlowDesc() {
-				if (this.orderInfo.state >= 4) return '买卖合同已上传';
-				if (this.orderInfo.state >= 3) return '等待上传买卖合同（PDF）';
+				if (this.orderInfo.state >= 4) return '买卖合同已审核通过';
+				if (this.orderInfo.state >= 3) {
+					if (this.orderInfo.contractStatus === 4) return '合同已被驳回，请重新上传';
+					if (this.orderInfo.contractStatus === 1) return '合同已上传，等待工厂审核';
+					return '等待上传买卖合同（PDF）';
+				}
+				if (this.orderInfo.state >= 2) return '等待工厂确认接单';
 				return '缴纳保证金后开始';
 			},
 
@@ -413,8 +520,26 @@
 
 			getLogisticsFlowDesc() {
 				if (this.orderInfo.state >= 5) return '货物已签收';
-				if (this.orderInfo.state >= 4) return '物流运输中';
+				if (this.orderInfo.state >= 4) {
+					let proof = this.orderInfo.payment_proof;
+					if (!proof) return '等待上传付款凭证';
+					if (proof.status === 0) return '等待工厂确认付款凭证';
+					if (proof.status === 1) return '工厂已发货，物流运输中';
+					if (proof.status === 2) return '付款凭证被驳回，请重新上传';
+					return '等待上传付款凭证';
+				}
 				return '合同确认后安排发货';
+			},
+
+			getLogisticsStatusText() {
+				if (this.orderInfo.state >= 5) return '已签收';
+				if (this.orderInfo.state >= 4) {
+					let proof = this.orderInfo.payment_proof;
+					if (!proof || proof.status === 2) return '待付款';
+					if (proof.status === 0) return '待确认';
+					if (proof.status === 1) return '运输中';
+				}
+				return '待发货';
 			},
 
 			getActions() {
@@ -424,11 +549,21 @@
 						actions.push({ type: 'deposit', label: '去缴纳保证金', desc: '锁定佣金' });
 						break;
 					case 3:
-						actions.push({ type: 'contract', label: '去上传合同', desc: '上传买卖合同' });
+						if (this.orderInfo.contractStatus !== 1) {
+							actions.push({ type: 'contract', label: '去上传合同', desc: '上传买卖合同' });
+						}
 						break;
 					case 4:
-						actions.push({ type: 'logistics', label: '查看物流', desc: '查看物流跟踪信息' });
-						actions.push({ type: 'urge', label: '催促工厂', desc: '发送催促通知' });
+						if (!this.orderInfo.payment_proof || this.orderInfo.payment_proof.status === 2) {
+							// 未上传或被驳回 → 上传付款凭证
+							actions.push({ type: 'payment_proof', label: '上传付款凭证', desc: '上传买家付款证明图片' });
+						} else if (this.orderInfo.payment_proof.status === 0) {
+							// 已上传待审核 → 催促工厂
+							actions.push({ type: 'urge', label: '催促工厂', desc: '催促工厂审核付款凭证' });
+						} else if (this.orderInfo.payment_proof.status === 1) {
+							// 工厂已确认 → 查看物流
+							actions.push({ type: 'logistics', label: '查看物流', desc: '查看物流跟踪信息' });
+						}
 						break;
 					case 5:
 						actions.push({ type: 'logistics', label: '查看物流', desc: '查看物流跟踪信息' });
@@ -441,7 +576,7 @@
 			},
 
 			getActionIcon(type) {
-				const map = { deposit: '付', contract: '传', logistics: '物', urge: '催' };
+				const map = { deposit: '付', contract: '传', logistics: '物', urge: '催', payment_proof: '凭' };
 				return map[type] || '';
 			},
 
@@ -449,7 +584,7 @@
 				const map = {
 					1: '保证金将冻结至托管账户，履约完成后全额退还。逾期未上传合同，保证金将自动划转给工厂。',
 					3: '请在倒计时结束前上传正式买卖合同，逾期未传合同保证金将自动划转给工厂。',
-					4: '工厂点击【同意放款】或倒计时结束后，系统将自动结算佣金并退还保证金至您的账户。',
+					4: '催款期内请积极向买家催付货款。催款期结束后，系统将自动结算佣金并退还保证金至您的账户。',
 					5: '物流已签收，等待工厂确认后系统将自动放款。如有异常请联系平台客服。'
 				};
 				return map[this.orderInfo.state] || '';
@@ -462,7 +597,10 @@
 						param = encodeURIComponent(JSON.stringify({
 							productName: this.orderInfo.productName,
 							coverImage: this.orderInfo.coverImage,
-							companyName: this.orderInfo.companyName,
+							factoryName: this.orderInfo.factoryName,
+							unitPrice: this.orderInfo.unitPrice,
+							quantity: this.orderInfo.quantity,
+							totalAmount: this.orderInfo.totalAmount,
 							commission: this.orderInfo.commission,
 							commissionAmount: this.orderInfo.commissionAmount,
 							depositRate: this.orderInfo.depositRate
@@ -475,7 +613,11 @@
 						param = encodeURIComponent(JSON.stringify({
 							productName: this.orderInfo.productName,
 							coverImage: this.orderInfo.coverImage,
-							companyName: this.orderInfo.companyName
+							companyName: this.orderInfo.factoryName,
+							unitPrice: this.orderInfo.unitPrice,
+							quantity: this.orderInfo.quantity,
+							totalAmount: this.orderInfo.totalAmount,
+							contractDeadline: this.orderInfo.contractDeadline || 0
 						}));
 						uni.navigateTo({
 							url: '/pages/jj/jj_contract/jj_contract?orderId=' + this.orderId + '&param=' + param
@@ -485,6 +627,9 @@
 						uni.navigateTo({
 							url: '/pages/jj/jj_logistics/jj_logistics?orderId=' + this.orderId
 						});
+						break;
+					case 'payment_proof':
+						this.goPaymentProof();
 						break;
 					case 'urge':
 						this.$core.post({
@@ -507,7 +652,12 @@
 					let param = encodeURIComponent(JSON.stringify({
 						productName: this.orderInfo.productName,
 						coverImage: this.orderInfo.coverImage,
-						companyName: this.orderInfo.companyName
+						companyName: this.orderInfo.factoryName,
+						unitPrice: this.orderInfo.unitPrice,
+						quantity: this.orderInfo.quantity,
+						totalAmount: this.orderInfo.totalAmount,
+						contractDeadline: this.orderInfo.contractDeadline || 0,
+						paymentUrgeDeadline: this.orderInfo.paymentUrgeDeadline || 0
 					}));
 					uni.navigateTo({
 						url: '/pages/jj/jj_contract/jj_contract?orderId=' + this.orderId + '&param=' + param
@@ -523,6 +673,92 @@
 				}
 			},
 
+			goPaymentProof() {
+				uni.navigateTo({
+					url: '/pages/jj/jj_payment_proof/jj_payment_proof?orderId=' + this.orderId
+				});
+			},
+
+			isFilePdf(url) {
+				if (!url) return false;
+				return url.toLowerCase().endsWith('.pdf');
+			},
+			getFileNameFromUrl(url) {
+				if (!url) return '';
+				let parts = url.split('/');
+				return parts[parts.length - 1] || '';
+			},
+			previewProofFile(fileUrl) {
+				if (!fileUrl) return;
+				if (this.isFilePdf(fileUrl)) {
+					// #ifdef H5
+					window.open(fileUrl, '_blank');
+					// #endif
+					// #ifdef MP-WEIXIN
+					uni.showLoading({ title: '加载中' });
+					uni.downloadFile({
+						url: fileUrl,
+						success: res => {
+							uni.hideLoading();
+							uni.openDocument({
+								filePath: res.tempFilePath,
+								fileType: 'pdf',
+								showMenu: true
+							});
+						},
+						fail: () => {
+							uni.hideLoading();
+							uni.showToast({ title: '文件加载失败', icon: 'none' });
+						}
+					});
+					// #endif
+				} else {
+					let imageUrls = (this.orderInfo.payment_proof.file_urls || []).filter(u => !this.isFilePdf(u));
+					let current = imageUrls.indexOf(fileUrl);
+					uni.previewImage({
+						urls: imageUrls.length ? imageUrls : [fileUrl],
+						current: current >= 0 ? current : 0
+					});
+				}
+			},
+			downloadProofFile(fileUrl) {
+				if (!fileUrl) return;
+				// #ifdef H5
+				let a = document.createElement('a');
+				a.href = fileUrl;
+				a.download = this.getFileNameFromUrl(fileUrl);
+				a.target = '_blank';
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				// #endif
+				// #ifdef MP-WEIXIN
+				uni.showLoading({ title: '下载中' });
+				uni.downloadFile({
+					url: fileUrl,
+					success: res => {
+						uni.hideLoading();
+						uni.saveFile({
+							tempFilePath: res.tempFilePath,
+							success: () => {
+								uni.showToast({ title: '已保存', icon: 'success' });
+							},
+							fail: () => {
+								uni.openDocument({
+									filePath: res.tempFilePath,
+									showMenu: true
+								});
+							}
+						});
+					},
+					fail: () => {
+						uni.hideLoading();
+						uni.showToast({ title: '下载失败', icon: 'none' });
+					}
+				});
+				// #endif
+			},
+
 			goFactoryBonus() {
 				this.showBonusDetail = !this.showBonusDetail;
 				this.showRebateDetail = false;
@@ -531,6 +767,15 @@
 			goLogisticsRebate() {
 				this.showRebateDetail = !this.showRebateDetail;
 				this.showBonusDetail = false;
+			},
+
+			copyOrderNo() {
+				uni.setClipboardData({
+					data: this.orderInfo.orderNo,
+					success: () => {
+						uni.showToast({ title: '已复制', icon: 'success' });
+					}
+				});
 			}
 		}
 	}
@@ -573,6 +818,13 @@
 		background: linear-gradient(135deg, #BFBFBF, #8C8C8C);
 	}
 
+	/* 合同驳回提示 */
+	.reject-banner {
+		background: #FFF2F0;
+		border: 2rpx solid #FFCCC7;
+		border-radius: 20rpx;
+	}
+
 	/* 佣金锁定横幅 */
 	.lock-banner {
 		background: linear-gradient(135deg, #FFF7E6, #FFFFFF);
@@ -598,8 +850,101 @@
 		background: #F5F7FB;
 	}
 
+	.copy-btn {
+		color: #FE4B01;
+		border: 1rpx solid #FE4B01;
+		border-radius: 6rpx;
+		padding: 2rpx 12rpx;
+		margin-left: 12rpx;
+		flex-shrink: 0;
+	}
+
 	.detail-row {
 		padding: 24rpx 0;
+	}
+
+	/* 等待工厂审核 */
+	.review-waiting-box {
+		padding: 40rpx 0 30rpx;
+	}
+
+	.review-waiting-icon {
+		display: inline-flex;
+		width: 72rpx;
+		height: 72rpx;
+		background: linear-gradient(135deg, #1890FF, #096DD9);
+		border-radius: 50%;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* 付款凭证状态 */
+	.proof-status-box {
+		padding: 30rpx 0 20rpx;
+	}
+
+	.proof-pending-icon {
+		display: inline-flex;
+		width: 72rpx;
+		height: 72rpx;
+		background: linear-gradient(135deg, #1890FF, #096DD9);
+		border-radius: 50%;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.proof-done-icon {
+		display: inline-flex;
+		width: 72rpx;
+		height: 72rpx;
+		background: linear-gradient(135deg, #52C41A, #389E0D);
+		border-radius: 50%;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.proof-reject-icon {
+		display: inline-flex;
+		width: 72rpx;
+		height: 72rpx;
+		background: linear-gradient(135deg, #FF4D4F, #CF1322);
+		border-radius: 50%;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.proof-upload-btn {
+		display: inline-flex;
+		height: 72rpx;
+		padding: 0 40rpx;
+		background: linear-gradient(135deg, #FE4B01, #E84400);
+		border-radius: 36rpx;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* 凭证文件列表 */
+	.proof-file-list {
+		border-top: 1rpx solid #F0F0F0;
+		padding-top: 20rpx;
+	}
+
+	.proof-file-row {
+		background: #F5F7FB;
+		border-radius: 8rpx;
+		padding: 16rpx 20rpx;
+		align-items: center;
+	}
+
+	.proof-file-icon-box {
+		width: 48rpx;
+		height: 48rpx;
+		border-radius: 8rpx;
+		background: #1890FF;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
 	}
 
 	/* 倒计时 */
@@ -652,6 +997,13 @@
 		font-size: 36rpx;
 		font-weight: bold;
 		color: #333333;
+		margin: 0 10rpx;
+	}
+
+	.time-sep-text {
+		font-size: 26rpx;
+		font-weight: bold;
+		color: #666666;
 		margin: 0 10rpx;
 	}
 
@@ -760,6 +1112,19 @@
 		color: #40A9FF;
 	}
 
+	/* 上传付款凭证 - 紫色 */
+	.action-icon-payment_proof {
+		background: linear-gradient(135deg, #722ED1, #531DAB);
+	}
+
+	.action-label-payment_proof {
+		color: #722ED1;
+	}
+
+	.action-desc-payment_proof {
+		color: #9254DE;
+	}
+
 	@keyframes pulse-glow {
 		0%, 100% {
 			box-shadow: 0 0 0 0 rgba(254, 75, 1, 0.3);
@@ -854,6 +1219,11 @@
 		.time-sep {
 			font-size: 24px;
 			margin: 0 8px;
+		}
+
+		.time-sep-text {
+			font-size: 14px;
+			margin: 0 6px;
 		}
 
 		.tip-box {

@@ -3,7 +3,8 @@
 		<view class="page-foot bg-white">
 			<view class="foot-nav flex-box">
 				<view class="btn-contact fs28" @click="onContact">联系厂家</view>
-				<view class="btn-order btn5 flex-grow-1 ml20" @click="onTakeOrder">立即接单</view>
+				<view class="btn-cart fs28" @click="onAddToCart">加入清单</view>
+				<view class="btn-order btn5 fs28" @click="onCheckout">立即结算</view>
 			</view>
 		</view>
 		<view class="container bg-f5">
@@ -73,6 +74,63 @@
 				</view>
 			</view>
 		</view>
+
+		<!-- 明细弹框 -->
+		<view v-if="showDetailPopup" class="popup-mask" @click.self="showDetailPopup = false">
+			<view class="popup-content">
+				<view class="popup-header flex-box">
+					<view class="fs34 fwb col1 flex-grow-1">明细</view>
+					<view class="fs28 col9" @click="showDetailPopup = false">关闭</view>
+				</view>
+				<view class="popup-body">
+					<!-- 商品摘要 -->
+					<view class="flex-box popup-product-row bb">
+						<image :src="detail.coverImage" mode="aspectFill" class="popup-thumb"></image>
+						<view class="flex-grow-1 ml20">
+							<view class="fs28 fwb col1 m-ellipsis">{{ detail.name }}</view>
+							<view class="mt10">
+								<text class="fs24 col4">¥</text>
+								<text class="fs30 fwb col4">{{ formatPrice(detail.price) }}</text>
+								<text class="fs22 col9"> / {{ detail.unit }}</text>
+							</view>
+						</view>
+					</view>
+
+					<!-- 数量选择 -->
+					<view class="quantity-row flex-box bb">
+						<view class="fs28 col5">购买数量</view>
+						<view class="flex-grow-1"></view>
+						<view class="quantity-ctrl flex-box">
+							<view class="qty-btn qty-minus" :class="{ disabled: popupQuantity <= 1 }" @click="onQuantityChange(-1)">-</view>
+							<input type="number" class="qty-input" v-model="popupQuantity" @blur="onQuantityBlur" />
+							<view class="qty-btn qty-plus" :class="{ disabled: popupQuantity >= detail.stock }" @click="onQuantityChange(1)">+</view>
+						</view>
+					</view>
+
+					<!-- 金额明细 -->
+					<view class="detail-row flex-box bb">
+						<view class="col5 fs28">合同金额</view>
+						<view class="flex-grow-1 tr fs28 col1">¥{{ formatMoney(popupContractAmount) }}</view>
+					</view>
+					<view class="detail-row flex-box bb">
+						<view class="col5 fs28">佣金</view>
+						<view class="flex-grow-1 tr fs28 col1">¥{{ formatMoney(popupCommission) }}</view>
+					</view>
+					<view class="detail-row flex-box">
+						<view class="col5 fs28 fwb">履约保证金</view>
+						<view class="flex-grow-1 tr">
+							<text class="fs24 col4">¥</text>
+							<text class="fs34 fwb col4">{{ formatMoney(popupDeposit) }}</text>
+						</view>
+					</view>
+
+					<!-- 确认按钮 -->
+					<view class="popup-footer">
+						<view class="btn5" @click="onConfirmPopup">{{ popupAction === 'cart' ? '确认加入清单' : '立即结算' }}</view>
+					</view>
+				</view>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -81,7 +139,11 @@
 		data() {
 			return {
 				id: '',
-				detail: {}
+				detail: {},
+				showDetailPopup: false,
+				popupAction: 'cart',
+				popupQuantity: 1,
+				depositRate: 1
 			}
 		},
 		computed: {
@@ -90,6 +152,15 @@
 					return Number(this.detail.estimatedCommission).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 				}
 				return '0.00';
+			},
+			popupContractAmount() {
+				return (this.detail.price || 0) * (this.popupQuantity || 0);
+			},
+			popupCommission() {
+				return this.popupContractAmount * (this.detail.commission || 0) / 100;
+			},
+			popupDeposit() {
+				return this.popupCommission * (this.depositRate || 1) / 100;
 			}
 		},
 		onLoad(options) {
@@ -123,6 +194,7 @@
 					success: ret => {
 						if (ret.data && ret.data.id) {
 							this.detail = this.mapProduct(ret.data);
+							this.depositRate = Number(ret.data.deposit_rate) || 10;
 						} else {
 							uni.showToast({ title: '商品不存在', icon: 'none' });
 							setTimeout(() => { uni.navigateBack(); }, 1500);
@@ -138,13 +210,59 @@
 			onContact() {
 				uni.showToast({ title: '功能开发中', icon: 'none' });
 			},
-			onTakeOrder() {
-				uni.navigateTo({
-					url: '/pages/jj/jj_buyer_form/jj_buyer_form?productId=' + this.id
-				});
+			onAddToCart() {
+				this.popupAction = 'cart';
+				this.popupQuantity = 1;
+				this.showDetailPopup = true;
+			},
+			onCheckout() {
+				this.popupAction = 'checkout';
+				this.popupQuantity = 1;
+				this.showDetailPopup = true;
+			},
+			onQuantityChange(delta) {
+				let newQty = Number(this.popupQuantity) + delta;
+				if (newQty < 1) newQty = 1;
+				if (this.detail.stock && newQty > this.detail.stock) newQty = this.detail.stock;
+				this.popupQuantity = newQty;
+			},
+			onQuantityBlur() {
+				let qty = parseInt(this.popupQuantity);
+				if (isNaN(qty) || qty < 1) qty = 1;
+				if (this.detail.stock && qty > this.detail.stock) qty = this.detail.stock;
+				this.popupQuantity = qty;
+			},
+			onConfirmPopup() {
+				if (this.popupAction === 'cart') {
+					this.$core.post({
+						url: 'xiluxc.jj_cart/add',
+						data: {
+							product_id: this.id,
+							quantity: this.popupQuantity
+						},
+						success: ret => {
+							uni.showToast({ title: '已加入清单', icon: 'success' });
+							this.showDetailPopup = false;
+						},
+						fail: () => { return false; }
+					});
+				} else {
+					this.showDetailPopup = false;
+					uni.navigateTo({
+						url: '/pages/jj/jj_buyer_form/jj_buyer_form?productId=' + this.id + '&quantity=' + this.popupQuantity
+					});
+				}
 			},
 			onViewReport() {
 				uni.showToast({ title: '暂无检测报告', icon: 'none' });
+			},
+			formatPrice(price) {
+				if (!price && price !== 0) return '0.00';
+				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+			},
+			formatMoney(n) {
+				if (!n && n !== 0) return '0.00';
+				return Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			}
 		}
 	}
@@ -200,25 +318,132 @@
 
 	.foot-nav {
 		padding: 10rpx 30rpx;
+		gap: 16rpx;
 	}
 
 	.btn-contact {
+		flex: 1;
 		border: 1px solid #FE4B01;
 		color: #FE4B01;
 		height: 80rpx;
 		line-height: calc(80rpx - 2px);
 		text-align: center;
 		border-radius: 40rpx;
-		padding: 0 40rpx;
+	}
+
+	.btn-cart {
+		flex: 1;
+		border: 1px solid #FE4B01;
+		color: #FE4B01;
+		background: rgba(254, 75, 1, 0.06);
+		height: 80rpx;
+		line-height: calc(80rpx - 2px);
+		text-align: center;
+		border-radius: 40rpx;
 	}
 
 	.btn-order {
+		flex: 1;
 		height: 80rpx;
 		line-height: 80rpx;
 		text-align: center;
 		font-size: 30rpx;
 		font-weight: bold;
 		border-radius: 40rpx;
+	}
+
+	/* 弹框样式 */
+	.popup-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		z-index: 999;
+		display: flex;
+		align-items: flex-end;
+	}
+
+	.popup-content {
+		width: 100%;
+		background: #FFFFFF;
+		border-radius: 30rpx 30rpx 0 0;
+		max-height: 80vh;
+		overflow-y: auto;
+	}
+
+	.popup-header {
+		padding: 30rpx;
+		border-bottom: 1px solid #F0F0F0;
+		position: sticky;
+		top: 0;
+		background: #FFFFFF;
+		z-index: 1;
+		border-radius: 30rpx 30rpx 0 0;
+	}
+
+	.popup-body {
+		padding: 0 30rpx;
+	}
+
+	.popup-footer {
+		padding: 20rpx 0 40rpx;
+	}
+
+	.popup-product-row {
+		padding: 24rpx 0;
+	}
+
+	.popup-thumb {
+		width: 120rpx;
+		height: 120rpx;
+		border-radius: 12rpx;
+		flex-shrink: 0;
+		background: #F5F7FB;
+	}
+
+	/* 数量控件 */
+	.quantity-row {
+		padding: 30rpx 0;
+	}
+
+	.quantity-ctrl {
+		align-items: center;
+	}
+
+	.qty-btn {
+		width: 70rpx;
+		height: 70rpx;
+		line-height: 70rpx;
+		text-align: center;
+		font-size: 38rpx;
+		font-weight: bold;
+		color: #FFFFFF;
+		background: #FE4B01;
+		border-radius: 14rpx;
+		user-select: none;
+
+		&.disabled {
+			background: #D9D9D9;
+			color: #FFFFFF;
+		}
+	}
+
+	.qty-input {
+		width: 120rpx;
+		height: 70rpx;
+		text-align: center;
+		font-size: 34rpx;
+		font-weight: bold;
+		color: #333333;
+		border: 2rpx solid #E0E0E0;
+		border-radius: 10rpx;
+		margin: 0 16rpx;
+	}
+
+	.detail-row {
+		padding: 24rpx 0;
 	}
 
 	/* PC端适配 */
@@ -245,7 +470,9 @@
 			padding: 10px 30px;
 		}
 
-		.btn-contact {
+		.btn-contact,
+		.btn-cart,
+		.btn-order {
 			cursor: pointer;
 			transition: opacity 0.2s;
 
@@ -254,11 +481,21 @@
 			}
 		}
 
-		.btn-order {
+		.popup-content {
+			max-width: 600px;
+			margin: 0 auto;
+			border-radius: 12px 12px 0 0;
+		}
+
+		.detail-row {
+			padding: 16px 0;
+		}
+
+		.qty-btn {
 			cursor: pointer;
 			transition: opacity 0.2s;
 
-			&:hover {
+			&:hover:not(.disabled) {
 				opacity: 0.85;
 			}
 		}

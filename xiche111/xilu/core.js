@@ -342,6 +342,77 @@ module.exports = {
 			}
 		});
 	},
+	// 选择并上传文件（支持图片和PDF等文件类型）
+	// obj.count: 最大选择数量，默认1
+	// obj.extensions: 允许的文件扩展名，默认图片+PDF
+	// obj.success(ret, response): 上传成功回调，ret.data.url 为文件URL
+	// obj.fail: 上传失败回调
+	chooseAndUploadFile: function(obj) {
+		let that = this;
+		let count = obj.count || 1;
+		let successCb = obj.success;
+		let failCb = obj.fail;
+		let extensions = obj.extensions || ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.pdf'];
+
+		// #ifdef H5
+		uni.chooseFile({
+			count: count,
+			type: 'all',
+			extension: extensions,
+			success: (res) => {
+				(res.tempFiles || []).forEach(file => {
+					that.uploadFileH5({
+						filePath: file.path,
+						success: successCb,
+						fail: failCb
+					});
+				});
+			},
+			fail: (err) => {
+				if (typeof failCb === 'function') failCb(err);
+			}
+		});
+		// #endif
+		// #ifdef MP-WEIXIN
+		uni.showActionSheet({
+			itemList: ['拍照/从相册选择', '选择文件(PDF等)'],
+			success: (sheetRes) => {
+				if (sheetRes.tapIndex === 0) {
+					uni.chooseImage({
+						count: count,
+						success: (imgRes) => {
+							(imgRes.tempFiles || []).forEach(file => {
+								that.uploadFile({
+									filePath: file.path,
+									success: successCb,
+									fail: failCb
+								});
+							});
+						}
+					});
+				} else {
+					wx.chooseMessageFile({
+						count: count,
+						type: 'file',
+						extension: extensions,
+						success: (fileRes) => {
+							(fileRes.tempFiles || []).forEach(file => {
+								that.uploadFile({
+									filePath: file.path,
+									success: successCb,
+									fail: failCb
+								});
+							});
+						},
+						fail: (err) => {
+							if (typeof failCb === 'function') failCb(err);
+						}
+					});
+				}
+			}
+		});
+		// #endif
+	},
 	setUserinfo(user) {
 		if (!user) {
 			return false;

@@ -28,6 +28,7 @@
 				pcMenuList: [
 					{ key: 'home', label: '首页', icon: '/static/icon/icon_foot1_uc.png', iconActive: '/static/icon/icon_foot1_sc.png', url: '/pages/jj/jj_home/jj_home', isTab: false },
 					{ key: 'products', label: '商品池', icon: '/static/icon/icon_foot2_uc.png', iconActive: '/static/icon/icon_foot2_sc.png', url: '/pages/jj/jj_products/jj_products', isTab: false },
+					{ key: 'cart', label: '商品清单', icon: '/static/icon/icon_foot3_uc.png', iconActive: '/static/icon/icon_foot3_sc.png', url: '/pages/jj/jj_cart/jj_cart', isTab: false },
 					{ key: 'orders', label: '订单', icon: '/static/icon/icon_foot4_uc.png', iconActive: '/static/icon/icon_foot4_sc.png', url: '/pages/jj/jj_orders/jj_orders', isTab: false },
 					{ key: 'profile', label: '我的', icon: '/static/icon/icon_foot5_uc.png', iconActive: '/static/icon/icon_foot5_sc.png', url: '/pages/jj/jj_profile/jj_profile', isTab: false }
 				]

@@ -471,6 +471,181 @@
 			{
 				"navigationBarTitleText" : "买家管理"
 			}
+		},
+		{
+			"path" : "pages/jj/jj_cart/jj_cart",
+			"style" :
+			{
+				"navigationBarTitleText" : "商品清单"
+			}
+		},
+		{
+			"path" : "pages/jj/jj_home/jj_home",
+			"style" :
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/jj/jj_products/jj_products",
+			"style" :
+			{
+				"navigationBarTitleText" : "商品池"
+			}
+		},
+		{
+			"path" : "pages/jj/jj_orders/jj_orders",
+			"style" :
+			{
+				"navigationBarTitleText" : "我的订单"
+			}
+		},
+		{
+			"path" : "pages/jj/jj_profile/jj_profile",
+			"style" :
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/jj/jj_payment_proof/jj_payment_proof",
+			"style" :
+			{
+				"navigationBarTitleText" : "上传付款凭证"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_main/fc_main",
+			"style" :
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_home/fc_home",
+			"style" :
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_auth/fc_auth",
+			"style" :
+			{
+				"navigationBarTitleText" : "企业认证"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_products/fc_products",
+			"style" :
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_product_edit/fc_product_edit",
+			"style" :
+			{
+				"navigationBarTitleText" : "产品编辑"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_orders/fc_orders",
+			"style" :
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_order_detail/fc_order_detail",
+			"style" :
+			{
+				"navigationBarTitleText" : "订单详情"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_bids/fc_bids",
+			"style" :
+			{
+				"navigationBarTitleText" : "竞标管理"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_bid_quote/fc_bid_quote",
+			"style" :
+			{
+				"navigationBarTitleText" : "报价提交"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_agents/fc_agents",
+			"style" :
+			{
+				"navigationBarTitleText" : "居间人筛选"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_dashboard/fc_dashboard",
+			"style" :
+			{
+				"navigationBarTitleText" : "数据看板"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_points/fc_points",
+			"style" :
+			{
+				"navigationBarTitleText" : "积分中心"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_profile/fc_profile",
+			"style" :
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_wallet/fc_wallet",
+			"style" :
+			{
+				"navigationBarTitleText" : "我的钱包"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_recharge/fc_recharge",
+			"style" :
+			{
+				"navigationBarTitleText" : "充值"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_bank_accounts/fc_bank_accounts",
+			"style" :
+			{
+				"navigationBarTitleText" : "对公账户管理"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_bank_account_edit/fc_bank_account_edit",
+			"style" :
+			{
+				"navigationBarTitleText" : "对公账户"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_withdraw/fc_withdraw",
+			"style" :
+			{
+				"navigationBarTitleText" : "提现"
+			}
+		},
+		{
+			"path" : "pages/fc/fc_withdraw_log/fc_withdraw_log",
+			"style" :
+			{
+				"navigationBarTitleText" : "提现记录"
+			}
 		}
 	],
 	"tabBar": {

@@ -20,7 +20,10 @@
 			@click="goDetail(item)">
 			<!-- 订单头部：编号+状态 -->
 			<view class="flex-box mb20">
-				<view class="flex-grow-1 fs24 col9">订单编号：{{ item.orderNo }}</view>
+				<view class="flex-grow-1 fs24 col9 flex-box" style="align-items:center;">
+					<text>订单编号：{{ item.orderNo }}</text>
+					<view class="copy-btn fs22" @click.stop="copyOrderNo(item.orderNo)">复制</view>
+				</view>
 				<view class="status-label fs24" :class="'status-' + item.state">{{ getStateName(item.state) }}</view>
 			</view>
 			<!-- 商品信息 -->
@@ -28,10 +31,13 @@
 				<image :src="item.coverImage" mode="aspectFill" class="order-cover"></image>
 				<view class="flex-grow-1 ml20">
 					<view class="fs28 fwb col1 m-ellipsis lh36">{{ item.productName }}</view>
-					<view class="fs24 col9 mt10">买家：{{ item.companyName }}</view>
-					<view class="flex-box mt10">
-						<view class="commission-tag">佣金 ¥{{ formatPrice(item.commissionAmount) }}</view>
+					<view class="fs24 col9 mt8">厂家：{{ item.factoryName }}</view>
+					<view class="fs24 col9 mt8">单价：¥{{ item.unitPrice }} × {{ item.quantity }}</view>
+					<view class="flex-box mt8">
+						<view class="amount-tag">总价 ¥{{ item.totalAmount }}</view>
+						<view class="commission-tag ml10">佣金 ¥{{ formatPrice(item.commissionAmount) }}</view>
 					</view>
+					<view class="fs22 col9 mt8">下单时间：{{ item.createTime }}</view>
 				</view>
 			</view>
 			<!-- 操作按钮 -->
@@ -130,11 +136,16 @@
 							orderNo: item.order_sn || item.orderNo,
 							productName: item.product_name || item.productName,
 							coverImage: item.cover_image || item.coverImage || '/static/images/icon_upload_logo.png',
-							companyName: item.buyer_company || item.companyName,
+							factoryName: (item.factory && item.factory.company_name) || item.factory_name || item.factoryName || '',
+							unitPrice: item.unit_price || item.unitPrice || '0.00',
+							quantity: item.quantity || 0,
+							totalAmount: item.total_amount || item.totalAmount || '0.00',
 							commissionAmount: item.commission_amount || item.commissionAmount,
 							state: item.status !== undefined ? item.status : item.state,
 							depositRate: item.deposit_rate || item.depositRate,
 							commission: item.commission_rate || item.commission,
+							contractDeadline: item.contract_upload_deadline || 0,
+							paymentUrgeDeadline: item.payment_urge_deadline || 0,
 							createTime: item.createtime ? new Date(item.createtime * 1000).toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(/\//g, '-') : (item.createTime || '')
 						})) : [];
 						if (list.length === 0 && this.moreButton.page === 1) {
@@ -178,13 +189,18 @@
 				let param = encodeURIComponent(JSON.stringify({
 					productName: order.productName,
 					coverImage: order.coverImage,
-					companyName: order.companyName,
+					factoryName: order.factoryName,
+					unitPrice: order.unitPrice,
+					quantity: order.quantity,
+					totalAmount: order.totalAmount,
 					commissionAmount: order.commissionAmount,
 					state: order.state,
 					orderNo: order.orderNo,
 					commission: order.commission,
 					depositRate: order.depositRate,
-					createTime: order.createTime
+					createTime: order.createTime,
+					contractDeadline: order.contractDeadline || 0,
+					paymentUrgeDeadline: order.paymentUrgeDeadline || 0
 				}));
 				uni.navigateTo({
 					url: '/pages/jj/jj_order_detail/jj_order_detail?orderId=' + order.id + '&param=' + param
@@ -199,7 +215,10 @@
 						let depositParam = encodeURIComponent(JSON.stringify({
 							productName: order.productName,
 							coverImage: order.coverImage,
-							companyName: order.companyName,
+							factoryName: order.factoryName,
+							unitPrice: order.unitPrice,
+							quantity: order.quantity,
+							totalAmount: order.totalAmount,
 							commission: order.commission,
 							commissionAmount: order.commissionAmount,
 							depositRate: order.depositRate
@@ -213,7 +232,9 @@
 						let contractParam = encodeURIComponent(JSON.stringify({
 							productName: order.productName,
 							coverImage: order.coverImage,
-							companyName: order.companyName
+							companyName: order.factoryName,
+							contractDeadline: order.contractDeadline || 0,
+							paymentUrgeDeadline: order.paymentUrgeDeadline || 0
 						}));
 						uni.navigateTo({
 							url: '/pages/jj/jj_contract/jj_contract?orderId=' + order.id + '&param=' + contractParam
@@ -242,6 +263,16 @@
 			onClearSearch() {
 				this.keyword = '';
 				this.resetAndLoad();
+			},
+
+			// 复制订单号
+			copyOrderNo(orderNo) {
+				uni.setClipboardData({
+					data: orderNo,
+					success: () => {
+						uni.showToast({ title: '已复制', icon: 'success' });
+					}
+				});
 			},
 
 			// 价格格式化
@@ -351,6 +382,11 @@
 		color: #FAAD14;
 	}
 
+	.status-2 {
+		background: rgba(19, 194, 194, 0.1);
+		color: #13C2C2;
+	}
+
 	.status-3 {
 		background: rgba(24, 144, 255, 0.1);
 		color: #1890FF;
@@ -379,6 +415,23 @@
 		font-size: 22rpx;
 		padding: 4rpx 16rpx;
 		border-radius: 6rpx;
+	}
+
+	.amount-tag {
+		background: rgba(24, 144, 255, 0.1);
+		color: #1890FF;
+		font-size: 22rpx;
+		padding: 4rpx 16rpx;
+		border-radius: 6rpx;
+	}
+
+	.copy-btn {
+		color: #FE4B01;
+		border: 1rpx solid #FE4B01;
+		border-radius: 6rpx;
+		padding: 2rpx 12rpx;
+		margin-left: 12rpx;
+		flex-shrink: 0;
 	}
 
 	.flex-end {
@@ -473,6 +526,15 @@
 
 			&:hover {
 				opacity: 0.85;
+			}
+		}
+
+		.copy-btn {
+			cursor: pointer;
+			transition: opacity 0.2s;
+
+			&:hover {
+				opacity: 0.7;
 			}
 		}
 	}

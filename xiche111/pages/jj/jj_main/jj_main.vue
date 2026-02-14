@@ -18,6 +18,9 @@
 				<!-- 商品池 -->
 				<jj-products-content v-else-if="activeTab === 'products'" />
 
+				<!-- 商品清单 -->
+				<jj-cart-content v-else-if="activeTab === 'cart'" @switchTab="onSwitchTab" />
+
 				<!-- 订单 -->
 				<jj-orders-content v-else-if="activeTab === 'orders'" :init-tab="ordersInitTab" :key="ordersKey" />
 
@@ -43,9 +46,10 @@
 	import jjProductsContent from '@/components/jj-products-content/jj-products-content.vue';
 	import jjProfileContent from '@/components/jj-profile-content/jj-profile-content.vue';
 	import jjOrdersContent from '@/components/jj-orders-content/jj-orders-content.vue';
+	import jjCartContent from '@/components/jj-cart-content/jj-cart-content.vue';
 
 	export default {
-		components: { pcSidebar, jjTabbar, jjHomeContent, jjProductsContent, jjProfileContent, jjOrdersContent },
+		components: { pcSidebar, jjTabbar, jjHomeContent, jjProductsContent, jjProfileContent, jjOrdersContent, jjCartContent },
 		data() {
 			return {
 				activeTab: 'home',
@@ -65,6 +69,12 @@
 						iconActive: '/static/icon/icon_foot2_sc.png'
 					},
 					{
+						key: 'cart',
+						label: '商品清单',
+						icon: '/static/icon/icon_cart_uc.svg',
+						iconActive: '/static/icon/icon_cart_sc.svg'
+					},
+					{
 						key: 'orders',
 						label: '订单',
 						icon: '/static/icon/icon_foot4_uc.png',
@@ -80,7 +90,7 @@
 			}
 		},
 		onLoad(options) {
-			if (options.tab && ['home', 'products', 'orders', 'profile'].indexOf(options.tab) !== -1) {
+			if (options.tab && ['home', 'products', 'cart', 'orders', 'profile'].indexOf(options.tab) !== -1) {
 				this.activeTab = options.tab;
 			}
 		},

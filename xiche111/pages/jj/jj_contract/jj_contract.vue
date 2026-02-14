@@ -9,21 +9,44 @@
 						<image :src="orderInfo.coverImage" mode="aspectFill" class="product-thumb"></image>
 						<view class="flex-grow-1 ml20">
 							<view class="fs28 fwb col1 m-ellipsis">{{ orderInfo.productName }}</view>
-							<view class="mt10 fs24 col9">买家：{{ orderInfo.companyName }}</view>
+							<view class="mt10 fs24 col9">厂家：{{ orderInfo.companyName }}</view>
 						</view>
+					</view>
+					<view class="detail-row flex-box bb mt10">
+						<view class="col5 fs28">商品单价</view>
+						<view class="flex-grow-1 tr fs28 col1">¥{{ orderInfo.unitPrice }}</view>
+					</view>
+					<view class="detail-row flex-box bb">
+						<view class="col5 fs28">商品数量</view>
+						<view class="flex-grow-1 tr fs28 col1">{{ orderInfo.quantity }}</view>
+					</view>
+					<view class="detail-row flex-box">
+						<view class="col5 fs28">商品总价</view>
+						<view class="flex-grow-1 tr fs28 fwb col1">¥{{ orderInfo.totalAmount }}</view>
 					</view>
 				</view>
 
 				<!-- ============ 合同上传阶段 ============ -->
 				<block v-if="stage === 'upload'">
+					<!-- 合同驳回提示 -->
+					<view class="jj-box mb30 reject-banner" v-if="contractStatus === 4">
+						<view class="fs28 fwb" style="color:#FF4D4F;">合同已被工厂驳回</view>
+						<view class="fs24 col9 mt10">驳回原因：{{ rejectReason }}</view>
+						<view class="fs24 col9 mt5">请根据原因修改后重新上传</view>
+					</view>
+
 					<!-- 倒计时 -->
-					<view class="jj-box mb30">
+					<view class="jj-box mb30" v-if="countdownSeconds > 0 || countdownTimer">
 						<view class="countdown-header flex-box">
 							<view class="fs34 fwb col1 lh36 flex-grow-1">合同上传倒计时</view>
 							<view class="status-tag status-upload fs22">待上传</view>
 						</view>
 						<view class="countdown-box tc mt20">
 							<view class="countdown-time">
+								<template v-if="countdownDisplay.days > 0">
+									<text class="time-num">{{ countdownDisplay.days }}</text>
+									<text class="time-sep-text">天</text>
+								</template>
 								<text class="time-num">{{ countdownDisplay.hours }}</text>
 								<text class="time-sep">:</text>
 								<text class="time-num">{{ countdownDisplay.minutes }}</text>
@@ -41,7 +64,7 @@
 					<!-- 合同上传区 -->
 					<view class="jj-box mb30">
 						<view class="fs34 fwb col1 lh36 mb20">上传买卖合同</view>
-						<view class="fs24 col9 mb20">请上传正式买卖合同（PDF格式，≤10MB），合同内需包含最终锁定佣金金额。</view>
+						<view class="fs24 col9 mb20">请上传正式买卖合同（PDF格式，≤20MB），合同内需包含最终锁定佣金金额。</view>
 
 						<view class="upload-area" @click="chooseContract" v-if="!contractFile.url">
 							<image src="/static/images/icon_upload_logo.png" mode="aspectFill" class="upload-icon"></image>
@@ -59,6 +82,17 @@
 						</view>
 					</view>
 
+					<!-- 上传进度条 -->
+					<view class="progress-wrap mb30" v-if="uploading">
+						<view class="progress-bar-bg">
+							<view class="progress-bar-fill" :style="{ width: uploadProgress + '%' }"></view>
+						</view>
+						<view class="flex-box mt10">
+							<view class="flex-grow-1 fs24 col9">正在上传合同...</view>
+							<view class="fs24 col1 fwb">{{ uploadProgress }}%</view>
+						</view>
+					</view>
+
 					<!-- 提交按钮 -->
 					<view class="submit-btn-wrap">
 						<view class="btn5" :class="{ disabled: !contractFile.url || uploading }" @click="submitContract">
@@ -67,32 +101,36 @@
 					</view>
 				</block>
 
-				<!-- ============ 履约执行阶段 ============ -->
+				<!-- ============ 催款阶段 ============ -->
 				<block v-if="stage === 'execution'">
 					<!-- 状态横幅 -->
 					<view class="jj-box mb30 execution-banner">
 						<view class="flex-box flex-center flex-col">
 							<image src="/static/icon/icon_true.png" mode="aspectFill" class="banner-icon"></image>
-							<view class="fs30 fwb col1 mt15">合同已上传，进入履约期</view>
-							<view class="fs24 col9 mt10">工厂确认合同后将安排发货</view>
+							<view class="fs30 fwb col1 mt15">合同已审核通过，进入催款期</view>
+							<view class="fs24 col9 mt10">请在催款期内向买家催付货款</view>
 						</view>
 					</view>
 
-					<!-- 履约倒计时 -->
-					<view class="jj-box mb30">
+					<!-- 催款倒计时 -->
+					<view class="jj-box mb30" v-if="countdownSeconds > 0 || countdownTimer">
 						<view class="countdown-header flex-box">
-							<view class="fs34 fwb col1 lh36 flex-grow-1">履约倒计时</view>
-							<view class="status-tag status-exec fs22">履约中</view>
+							<view class="fs34 fwb col1 lh36 flex-grow-1">催款倒计时</view>
+							<view class="status-tag status-exec fs22">催款中</view>
 						</view>
 						<view class="countdown-box tc mt20">
 							<view class="countdown-time">
+								<template v-if="countdownDisplay.days > 0">
+									<text class="time-num">{{ countdownDisplay.days }}</text>
+									<text class="time-sep-text">天</text>
+								</template>
 								<text class="time-num">{{ countdownDisplay.hours }}</text>
 								<text class="time-sep">:</text>
 								<text class="time-num">{{ countdownDisplay.minutes }}</text>
 								<text class="time-sep">:</text>
 								<text class="time-num">{{ countdownDisplay.seconds }}</text>
 							</view>
-							<view class="fs24 col9 mt10">履约完成后佣金将自动结算，保证金全额退还</view>
+							<view class="fs24 col9 mt10">催款期结束后佣金将自动结算，保证金全额退还</view>
 						</view>
 					</view>
 
@@ -115,7 +153,7 @@
 					<view class="tip-box mb30">
 						<view class="fs24 col9 lh40">
 							<text class="fwb">说明：</text>
-							工厂点击【同意放款】或倒计时结束后，系统将自动结算佣金并退还保证金至您的账户。
+							工厂点击【同意放款】或催款期结束后，系统将自动结算佣金并退还保证金至您的账户。
 						</view>
 					</view>
 				</block>
@@ -144,7 +182,10 @@
 					productName: '',
 					coverImage: '/static/images/icon_upload_logo.png',
 					companyName: '',
-					contractUploadHours: 24,
+					unitPrice: '0.00',
+					quantity: 0,
+					totalAmount: '0.00',
+					contractUploadHours: 0,
 					executionHours: 72
 				},
 				stage: 'upload',  // upload | execution | expired
@@ -156,17 +197,23 @@
 					sizeText: ''
 				},
 				uploading: false,
+				uploadProgress: 0,
 				// 倒计时截止时间戳（秒）
-				deadlineTimestamp: 0
+				deadlineTimestamp: 0,
+				// 合同状态和驳回原因
+				contractStatus: 0,
+				rejectReason: ''
 			}
 		},
 		computed: {
 			countdownDisplay() {
 				let total = Math.max(0, this.countdownSeconds);
-				let hours = Math.floor(total / 3600);
+				let days = Math.floor(total / 86400);
+				let hours = Math.floor((total % 86400) / 3600);
 				let minutes = Math.floor((total % 3600) / 60);
 				let seconds = total % 60;
 				return {
+					days: days,
 					hours: String(hours).padStart(2, '0'),
 					minutes: String(minutes).padStart(2, '0'),
 					seconds: String(seconds).padStart(2, '0')
@@ -181,6 +228,22 @@
 				try {
 					let param = JSON.parse(decodeURIComponent(options.param));
 					this.orderInfo = Object.assign(this.orderInfo, param);
+					// param 中已有截止时间戳时立即启动倒计时
+					if (param.contractDeadline) {
+						let now = Math.floor(Date.now() / 1000);
+						if (param.contractDeadline > now) {
+							this.deadlineTimestamp = param.contractDeadline;
+							this.startCountdown();
+						} else if (param.paymentUrgeDeadline && param.paymentUrgeDeadline > now) {
+							this.stage = 'execution';
+							this.deadlineTimestamp = param.paymentUrgeDeadline;
+							this.startCountdown();
+						}
+					} else if (param.paymentUrgeDeadline) {
+						this.stage = 'execution';
+						this.deadlineTimestamp = param.paymentUrgeDeadline;
+						this.startCountdown();
+					}
 				} catch (e) {
 					console.log('param parse error', e);
 				}
@@ -193,8 +256,6 @@
 		methods: {
 			loadContractStatus() {
 				if (!this.orderId) {
-					// 无 orderId 时使用本地参数初始化倒计时（开发阶段）
-					this.initUploadCountdown(this.orderInfo.contractUploadHours);
 					return;
 				}
 				this.$core.get({
@@ -204,35 +265,26 @@
 					success: ret => {
 						let data = ret.data;
 						this.stage = data.stage || 'upload';
+						this.contractStatus = data.contract_status || 0;
+						this.rejectReason = data.reject_reason || '';
+						// 如果合同被驳回，回到上传阶段
+						if (this.contractStatus === 4) {
+							this.stage = 'upload';
+						}
 						if (data.deadline_timestamp) {
 							this.deadlineTimestamp = data.deadline_timestamp;
 							this.startCountdown();
-						} else if (this.stage === 'upload') {
-							this.initUploadCountdown(data.contract_upload_hours || this.orderInfo.contractUploadHours);
-						} else if (this.stage === 'execution') {
-							this.initExecutionCountdown(data.execution_hours || this.orderInfo.executionHours);
 						}
+						// 无截止时间戳时不启动倒计时
 						if (data.contract_url) {
 							this.contractFile.url = data.contract_url;
 							this.contractFile.name = data.contract_name || '买卖合同.pdf';
 						}
 					},
 					fail: () => {
-						// 接口未就绪时使用本地参数
-						this.initUploadCountdown(this.orderInfo.contractUploadHours);
 						return false;
 					}
 				});
-			},
-			initUploadCountdown(hours) {
-				this.stage = 'upload';
-				this.countdownSeconds = hours * 3600;
-				this.startCountdown();
-			},
-			initExecutionCountdown(hours) {
-				this.stage = 'execution';
-				this.countdownSeconds = hours * 3600;
-				this.startCountdown();
 			},
 			startCountdown() {
 				this.clearTimer();
@@ -279,8 +331,8 @@
 					extension: ['pdf'],
 					success: res => {
 						let file = res.tempFiles[0];
-						if (file.size > 10 * 1024 * 1024) {
-							uni.showToast({ title: '文件大小不能超过10MB', icon: 'none' });
+						if (file.size > 20 * 1024 * 1024) {
+							uni.showToast({ title: '文件大小不能超过20MB', icon: 'none' });
 							return;
 						}
 						that.contractFile = {
@@ -300,8 +352,8 @@
 				inputEl.onchange = function(e) {
 					let file = e.target.files[0];
 					if (!file) return;
-					if (file.size > 10 * 1024 * 1024) {
-						uni.showToast({ title: '文件大小不能超过10MB', icon: 'none' });
+					if (file.size > 20 * 1024 * 1024) {
+						uni.showToast({ title: '文件大小不能超过20MB', icon: 'none' });
 						return;
 					}
 					// H5 使用 blob URL 临时预览
@@ -327,69 +379,98 @@
 				}
 				if (this.uploading) return;
 				this.uploading = true;
+				this.uploadProgress = 0;
 
 				let that = this;
 				let filePath = this.contractFile.localPath || this.contractFile.url;
 
 				// #ifdef MP-WEIXIN
-				this.$core.uploadFile({
+				let userinfo = this.$core.getCache('userinfo');
+				let header = {};
+				if (userinfo && userinfo.token) {
+					header.token = userinfo.token;
+				}
+				let uploadTask = uni.uploadFile({
+					url: getApp().globalData.apiBaseUri + '/common/upload',
 					filePath: filePath,
-					success: (ret) => {
-						that.doSubmitContract(ret.data.url);
+					name: 'file',
+					header: header,
+					success: res => {
+						that.uploadProgress = 100;
+						if (res.statusCode === 200) {
+							let data = JSON.parse(res.data);
+							if (data.code == 1) {
+								that.doSubmitContract(data.data.fullurl || data.data.url);
+							} else {
+								that.uploading = false;
+								uni.showToast({ title: data.msg || '上传失败', icon: 'none' });
+							}
+						} else {
+							that.uploading = false;
+							uni.showToast({ title: '上传失败，状态码：' + res.statusCode, icon: 'none' });
+						}
 					},
-					fail: () => {
-						// 接口未就绪，Mock 上传成功
-						that.doSubmitContract('mock://contract/' + Date.now() + '.pdf');
+					fail: (err) => {
+						that.uploading = false;
+						uni.showToast({ title: '网络错误，上传失败', icon: 'none' });
 					}
+				});
+				uploadTask.onProgressUpdate(res => {
+					that.uploadProgress = res.progress || 0;
 				});
 				// #endif
 				// #ifdef H5
 				if (this.contractFile.rawFile) {
-					// H5 使用 uni.uploadFile 方式
 					let userinfo = this.$core.getCache('userinfo');
 					let header = {};
 					if (userinfo && userinfo.token) {
 						header.token = userinfo.token;
 					}
-					uni.uploadFile({
+					let uploadTask = uni.uploadFile({
 						url: getApp().globalData.apiBaseUri + '/common/upload',
 						filePath: filePath,
 						name: 'file',
 						header: header,
 						success: res => {
+							that.uploadProgress = 100;
 							if (res.statusCode === 200) {
 								let data = JSON.parse(res.data);
 								if (data.code == 1) {
-									that.doSubmitContract(data.data.fullurl);
+									that.doSubmitContract(data.data.fullurl || data.data.url);
 								} else {
-									// 接口未就绪，Mock 上传成功
-									that.doSubmitContract('mock://contract/' + Date.now() + '.pdf');
+									that.uploading = false;
+									uni.showToast({ title: data.msg || '上传失败', icon: 'none' });
 								}
 							} else {
-								// 接口未就绪，Mock 上传成功
-								that.doSubmitContract('mock://contract/' + Date.now() + '.pdf');
+								that.uploading = false;
+								uni.showToast({ title: '上传失败，状态码：' + res.statusCode, icon: 'none' });
 							}
 						},
-						fail: () => {
-							// 接口未就绪，Mock 上传成功
-							that.doSubmitContract('mock://contract/' + Date.now() + '.pdf');
+						fail: (err) => {
+							that.uploading = false;
+							uni.showToast({ title: '网络错误，上传失败', icon: 'none' });
 						}
+					});
+					uploadTask.onProgressUpdate(res => {
+						that.uploadProgress = res.progress || 0;
 					});
 				} else {
 					this.$core.uploadFileH5({
 						filePath: filePath,
 						success: (ret) => {
-							that.doSubmitContract(ret.data.url);
+							that.uploadProgress = 100;
+							that.doSubmitContract(ret.data.fullurl || ret.data.url);
 						},
 						fail: () => {
-							// 接口未就绪，Mock 上传成功
-							that.doSubmitContract('mock://contract/' + Date.now() + '.pdf');
+							that.uploading = false;
+							uni.showToast({ title: '上传失败', icon: 'none' });
 						}
 					});
 				}
 				// #endif
 			},
 			doSubmitContract(contractUrl) {
+				this.uploadProgress = 100;
 				this.$core.post({
 					url: 'xiluxc.jj_order/submit_contract',
 					data: {
@@ -402,9 +483,8 @@
 						this.onContractSubmitSuccess();
 					},
 					fail: err => {
-						// 接口未就绪，Mock 提交成功直接走流程
 						this.uploading = false;
-						this.onContractSubmitSuccess();
+						uni.showToast({ title: '提交合同失败，请重试', icon: 'none' });
 						return false;
 					}
 				});
@@ -453,6 +533,17 @@
 		border-radius: 12rpx;
 		flex-shrink: 0;
 		background: #F5F7FB;
+	}
+
+	.detail-row {
+		padding: 24rpx 0;
+	}
+
+	/* 合同驳回提示 */
+	.reject-banner {
+		background: #FFF2F0;
+		border: 2rpx solid #FFCCC7;
+		border-radius: 20rpx;
 	}
 
 	/* 倒计时样式 */
@@ -508,6 +599,13 @@
 		margin: 0 10rpx;
 	}
 
+	.time-sep-text {
+		font-size: 26rpx;
+		font-weight: bold;
+		color: #666666;
+		margin: 0 10rpx;
+	}
+
 	.warn-box {
 		background: #FFF2F0;
 		border-radius: 8rpx;
@@ -517,6 +615,26 @@
 
 	.col-warn {
 		color: #FF4D4F;
+	}
+
+	/* 上传进度条 */
+	.progress-wrap {
+		padding: 0 4rpx;
+	}
+
+	.progress-bar-bg {
+		width: 100%;
+		height: 12rpx;
+		background: #EEEEEE;
+		border-radius: 6rpx;
+		overflow: hidden;
+	}
+
+	.progress-bar-fill {
+		height: 100%;
+		background: linear-gradient(90deg, #FE4B01, #FF7E3F);
+		border-radius: 6rpx;
+		transition: width 0.3s ease;
 	}
 
 	/* 上传区域 */
@@ -636,6 +754,11 @@
 			margin: 0 8px;
 		}
 
+		.time-sep-text {
+			font-size: 14px;
+			margin: 0 6px;
+		}
+
 		.tip-box {
 			border-radius: 8px;
 			padding: 16px;
@@ -644,6 +767,15 @@
 		.submit-btn-wrap {
 			max-width: 400px;
 			margin: 0 auto;
+		}
+
+		.progress-bar-bg {
+			height: 8px;
+			border-radius: 4px;
+		}
+
+		.progress-bar-fill {
+			border-radius: 4px;
 		}
 	}
 </style>

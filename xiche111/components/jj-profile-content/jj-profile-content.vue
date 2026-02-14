@@ -113,7 +113,7 @@
 					{ key: 'pk_pool', label: 'PK奖池', icon: '/static/icon/icon_foot1_sc.png' },
 					{ key: 'red_packet', label: '平台红包', icon: '/static/icon/icon_foot4_sc.png' },
 					{ key: 'distribution', label: '分销推广', icon: '/static/icon/icon_foot1_sc.png' },
-					{ key: 'buyer_manage', label: '买家管理', icon: '/static/icon/icon_foot3_sc.png' },
+					// { key: 'buyer_manage', label: '买家管理', icon: '/static/icon/icon_foot3_sc.png' },
 					{ key: 'settings', label: '账号设置', icon: '/static/icon/icon_foot5_sc.png' },
 					{ key: 'switch', label: '切换身份', icon: '/static/icon/icon_foot4_sc.png' },
 					{ key: 'logout', label: '退出登录', icon: '/static/icon/icon_foot4_uc.png' }
@@ -128,6 +128,13 @@
 		},
 		mounted() {
 			this.loadProfile();
+			this.loadWishGoal();
+			uni.$on('wishGoalUpdated', () => {
+				this.loadWishGoal();
+			});
+		},
+		beforeDestroy() {
+			uni.$off('wishGoalUpdated');
 		},
 		methods: {
 			loadProfile() {
@@ -149,8 +156,25 @@
 					fail: () => { return false; }
 				});
 			},
+			loadWishGoal() {
+				this.$core.get({
+					url: 'xiluxc.jj_wish/current',
+					loading: false,
+					success: ret => {
+						if (ret.data && ret.data.id) {
+							this.wishGoal.target = Number(ret.data.target) || 0;
+							this.wishGoal.current = Number(ret.data.current) || 0;
+							this.wishGoal.type = ret.data.type === 'order' ? '月订单' : '月';
+						} else {
+							this.wishGoal.target = 0;
+							this.wishGoal.current = 0;
+						}
+					},
+					fail: () => { return false; }
+				});
+			},
 			onEditProfile() {
-				uni.showToast({ title: '功能开发中', icon: 'none' });
+				uni.navigateTo({ url: '/pages/jj/jj_settings/jj_settings' });
 			},
 			onMenuClick(key) {
 				switch (key) {
@@ -178,10 +202,11 @@
 					case 'switch':
 						uni.showModal({
 							title: '提示',
-							content: '确定要切换身份吗？将返回登录页重新选择角色。',
+							content: '确定要切换身份吗？将返回身份选择页。',
 							success: (res) => {
 								if (res.confirm) {
-									uni.redirectTo({ url: '/pages/login/login' });
+									this.$core.logout();
+									uni.redirectTo({ url: '/pages/jj_start/jj_start' });
 								}
 							}
 						});
@@ -193,7 +218,7 @@
 							success: (res) => {
 								if (res.confirm) {
 									this.$core.logout();
-									uni.redirectTo({ url: '/pages/login/login' });
+									uni.redirectTo({ url: '/pages/jj_start/jj_start' });
 								}
 							}
 						});

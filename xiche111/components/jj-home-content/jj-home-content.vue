@@ -45,6 +45,12 @@
 					</view>
 					<view class="fs24 col3 mt10 tc">浏览商品</view>
 				</view>
+				<view class="quick-item" @click="onQuickEntry('cart')">
+					<view class="quick-icon-wrap" style="background: linear-gradient(135deg, #FE4B01, #FF8C00);">
+						<image src="/static/icon/icon_cart_sc.svg" mode="aspectFill" class="quick-icon"></image>
+					</view>
+					<view class="fs24 col3 mt10 tc">商品清单</view>
+				</view>
 				<view class="quick-item" @click="onQuickEntry('bid')">
 					<view class="quick-icon-wrap" style="background: linear-gradient(135deg, #40a9ff, #69c0ff);">
 						<image src="/static/icon/icon_foot3_sc.png" mode="aspectFill" class="quick-icon"></image>
@@ -90,7 +96,7 @@
 				profile: {
 					realName: '居间人',
 					creditScore: 0,
-					avatar: '/static/icon/icon_foot5_sc.png'
+					avatar: '/static/images/user_null.png'
 				},
 				income: {
 					pendingRevenue: 0,
@@ -280,7 +286,7 @@
 				ctx.draw();
 			},
 			onQuickEntry(type) {
-				if (type === 'products' || type === 'orders') {
+				if (type === 'products' || type === 'orders' || type === 'cart') {
 					this.$emit('switchTab', type);
 				} else if (type === 'bid') {
 					uni.navigateTo({ url: '/pages/jj/jj_bid_board/jj_bid_board' });

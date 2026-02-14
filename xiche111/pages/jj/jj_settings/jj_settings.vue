@@ -261,10 +261,11 @@
 			onSwitchRole() {
 				uni.showModal({
 					title: '提示',
-					content: '确定要切换身份吗？将返回登录页重新选择角色。',
+					content: '确定要切换身份吗？将返回身份选择页。',
 					success: (res) => {
 						if (res.confirm) {
-							uni.redirectTo({ url: '/pages/login/login' });
+							this.$core.logout();
+							uni.redirectTo({ url: '/pages/jj_start/jj_start' });
 						}
 					}
 				});
@@ -282,7 +283,7 @@
 					success: (res) => {
 						if (res.confirm) {
 							this.$core.logout();
-							uni.redirectTo({ url: '/pages/login/login' });
+							uni.redirectTo({ url: '/pages/jj_start/jj_start' });
 						}
 					}
 				});

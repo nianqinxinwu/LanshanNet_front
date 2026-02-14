@@ -120,11 +120,11 @@
 		data() {
 			return {
 				currentGoal: {
-					id: 1,
+					id: 0,
 					type: 'income',
-					target: 10000,
-					current: 6800,
-					rewardDesc: '达成后获得 ¥200 现金红包',
+					target: 0,
+					current: 0,
+					rewardDesc: '',
 					claimed: false
 				},
 				form: {
@@ -217,18 +217,8 @@
 							rewardDesc: this.getRewardPreview(),
 							claimed: false
 						});
-					},
-					fail: () => {
-						// Mock 成功
-						uni.showToast({ title: '目标设定成功', icon: 'success' });
-						this.currentGoal = Object.assign(this.currentGoal, {
-							id: 1,
-							type: this.form.type,
-							target: Number(this.form.target),
-							rewardDesc: this.getRewardPreview(),
-							claimed: false
-						});
-						return false;
+						uni.$emit('wishGoalUpdated');
+						this.loadHistory();
 					}
 				});
 			},
@@ -242,11 +232,6 @@
 					success: () => {
 						this.currentGoal.claimed = true;
 						uni.showToast({ title: '奖励领取成功', icon: 'success' });
-					},
-					fail: () => {
-						this.currentGoal.claimed = true;
-						uni.showToast({ title: '奖励领取成功', icon: 'success' });
-						return false;
 					}
 				});
 			}

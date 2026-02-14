@@ -7,41 +7,105 @@
 		</view>
 		<view class="container bg-f5">
 			<view class="jj-page-wrap p30">
-				<!-- 订单摘要 -->
-				<view class="jj-box mb30">
-					<view class="fs34 fwb col1 lh36 mb20">订单信息</view>
-					<view class="flex-box">
-						<image :src="orderInfo.coverImage" mode="aspectFill" class="product-thumb"></image>
-						<view class="flex-grow-1 ml20">
-							<view class="fs28 fwb col1 m-ellipsis">{{ orderInfo.productName }}</view>
-							<view class="mt10 fs24 col9">买家：{{ orderInfo.companyName }}</view>
-							<view class="mt10">
-								<text class="fs24 col5">佣金比例：</text>
-								<text class="fs28 fwb col4">{{ orderInfo.commission }}%</text>
+				<!-- 单订单模式 -->
+				<template v-if="!isBatch">
+					<!-- 订单摘要 -->
+					<view class="jj-box mb30">
+						<view class="fs34 fwb col1 lh36 mb20">订单信息</view>
+						<view class="flex-box">
+							<image :src="orderInfo.coverImage" mode="aspectFill" class="product-thumb"></image>
+							<view class="flex-grow-1 ml20">
+								<view class="fs28 fwb col1 m-ellipsis">{{ orderInfo.productName }}</view>
+								<view class="mt10 fs24 col9">厂商：{{ orderInfo.factoryName }}</view>
+							</view>
+						</view>
+						<view class="detail-row flex-box bb mt10">
+							<view class="col5 fs28">商品单价</view>
+							<view class="flex-grow-1 tr fs28 col1">¥{{ orderInfo.unitPrice }}</view>
+						</view>
+						<view class="detail-row flex-box bb">
+							<view class="col5 fs28">商品数量</view>
+							<view class="flex-grow-1 tr fs28 col1">{{ orderInfo.quantity }}</view>
+						</view>
+						<view class="detail-row flex-box bb">
+							<view class="col5 fs28">商品总价</view>
+							<view class="flex-grow-1 tr fs28 fwb col1">¥{{ orderInfo.totalAmount }}</view>
+						</view>
+						<view class="detail-row flex-box">
+							<view class="col5 fs28">佣金比例</view>
+							<view class="flex-grow-1 tr fs28 col4">{{ orderInfo.commission }}%</view>
+						</view>
+					</view>
+
+					<!-- 保证金金额 -->
+					<view class="jj-box mb30">
+						<view class="fs34 fwb col1 lh36 mb20">保证金明细</view>
+						<view class="detail-row flex-box bb">
+							<view class="col5 fs28">锁定佣金(单位:元)</view>
+							<view class="flex-grow-1 tr fs28 col1">¥{{ formatPrice(orderInfo.commissionAmount) }}</view>
+						</view>
+						<view class="detail-row flex-box bb">
+							<view class="col5 fs28">保证金比例</view>
+							<view class="flex-grow-1 tr fs28 col1">{{ orderInfo.depositRate }}%</view>
+						</view>
+						<view class="detail-row flex-box">
+							<view class="col5 fs28 fwb">应缴保证金(单位:元)</view>
+							<view class="flex-grow-1 tr">
+								<text class="fs24 col4">¥</text>
+								<text class="fs36 fwb col4">{{ formatPrice(depositAmount) }}</text>
 							</view>
 						</view>
 					</view>
-				</view>
+				</template>
 
-				<!-- 保证金金额 -->
-				<view class="jj-box mb30">
-					<view class="fs34 fwb col1 lh36 mb20">保证金明细</view>
-					<view class="detail-row flex-box bb">
-						<view class="col5 fs28">锁定佣金(单位:元)</view>
-						<view class="flex-grow-1 tr fs28 col1">¥{{ formatPrice(orderInfo.commissionAmount) }}</view>
-					</view>
-					<view class="detail-row flex-box bb">
-						<view class="col5 fs28">保证金比例</view>
-						<view class="flex-grow-1 tr fs28 col1">{{ orderInfo.depositRate }}%</view>
-					</view>
-					<view class="detail-row flex-box">
-						<view class="col5 fs28 fwb">应缴保证金(单位:元)</view>
-						<view class="flex-grow-1 tr">
-							<text class="fs24 col4">¥</text>
-							<text class="fs36 fwb col4">{{ formatPrice(depositAmount) }}</text>
+				<!-- 批量模式 -->
+				<template v-else>
+					<!-- 订单列表 -->
+					<view class="jj-box mb30">
+						<view class="fs34 fwb col1 lh36 mb20">订单信息 <text class="fs24 col9">({{ batchItems.length }}笔订单)</text></view>
+						<view class="batch-order-item" :class="{ bb: idx < batchItems.length - 1 }" v-for="(item, idx) in batchItems" :key="idx">
+							<view class="flex-box">
+								<view class="flex-grow-1">
+									<view class="fs28 fwb col1 m-ellipsis">{{ item.product_name }}</view>
+									<view class="fs24 col9 mt6">¥{{ formatPrice(item.unit_price) }} x{{ item.quantity }}</view>
+								</view>
+								<view class="tr ml15">
+									<view class="fs24 col5">合同金额</view>
+									<view class="fs26 fwb col1 mt4">¥{{ formatPrice(item.total_amount) }}</view>
+								</view>
+							</view>
+							<view class="flex-box mt10">
+								<view class="fs22 col9">佣金: ¥{{ formatPrice(item.commission_amount) }}</view>
+								<view class="fs22 col9 ml20">保证金比例: {{ item.deposit_rate }}%</view>
+								<view class="fs22 col4 ml20">保证金: ¥{{ formatPrice(item.deposit_amount) }}</view>
+							</view>
 						</view>
 					</view>
-				</view>
+
+					<!-- 金额汇总 -->
+					<view class="jj-box mb30">
+						<view class="fs34 fwb col1 lh36 mb20">金额汇总</view>
+						<view class="detail-row flex-box bb">
+							<view class="col5 fs28">订单数量</view>
+							<view class="flex-grow-1 tr fs28 col1">{{ batchItems.length }}笔</view>
+						</view>
+						<view class="detail-row flex-box bb">
+							<view class="col5 fs28">合同金额合计(单位:元)</view>
+							<view class="flex-grow-1 tr fs28 col1">¥{{ formatPrice(batchTotalContract) }}</view>
+						</view>
+						<view class="detail-row flex-box bb">
+							<view class="col5 fs28">佣金合计(单位:元)</view>
+							<view class="flex-grow-1 tr fs28 col1">¥{{ formatPrice(batchTotalCommission) }}</view>
+						</view>
+						<view class="detail-row flex-box">
+							<view class="col5 fs28 fwb">应缴保证金合计(单位:元)</view>
+							<view class="flex-grow-1 tr">
+								<text class="fs24 col4">¥</text>
+								<text class="fs36 fwb col4">{{ formatPrice(batchTotalDeposit) }}</text>
+							</view>
+						</view>
+					</view>
+				</template>
 
 				<!-- 支付方式 -->
 				<view class="jj-box mb30">
@@ -87,17 +151,24 @@
 		data() {
 			return {
 				orderId: '',
+				batchId: '',
+				isBatch: false,
 				orderInfo: {
 					productName: '',
 					coverImage: '/static/images/icon_upload_logo.png',
-					companyName: '',
+					factoryName: '',
+					unitPrice: '0.00',
+					quantity: 0,
+					totalAmount: '0.00',
 					commission: 0,
 					commissionAmount: 0,
 					depositRate: 0,
 					depositAmount: 0,
-					contractUploadHours: 24,
+					contractUploadHours: 0,
 					executionHours: 72
 				},
+				batchItems: [],
+				batchTotalDeposit: 0,
 				payType: 'wxpay',
 				isAgree: false,
 				paying: false
@@ -106,21 +177,37 @@
 		computed: {
 			depositAmount() {
 				return Number(this.orderInfo.depositAmount) || 0;
+			},
+			batchTotalContract() {
+				let total = 0;
+				this.batchItems.forEach(i => { total += Number(i.total_amount) || 0; });
+				return total;
+			},
+			batchTotalCommission() {
+				let total = 0;
+				this.batchItems.forEach(i => { total += Number(i.commission_amount) || 0; });
+				return total;
 			}
 		},
 		onLoad(options) {
-			if (options.orderId) {
-				this.orderId = options.orderId;
-			}
-			if (options.param) {
-				try {
-					let param = JSON.parse(decodeURIComponent(options.param));
-					this.orderInfo = Object.assign(this.orderInfo, param);
-				} catch (e) {
-					console.log('param parse error', e);
+			if (options.batchId) {
+				this.batchId = options.batchId;
+				this.isBatch = true;
+				this.loadBatchInfo();
+			} else {
+				if (options.orderId) {
+					this.orderId = options.orderId;
 				}
+				if (options.param) {
+					try {
+						let param = JSON.parse(decodeURIComponent(options.param));
+						this.orderInfo = Object.assign(this.orderInfo, param);
+					} catch (e) {
+						console.log('param parse error', e);
+					}
+				}
+				this.loadOrderInfo();
 			}
-			this.loadOrderInfo();
 		},
 		methods: {
 			loadOrderInfo() {
@@ -137,6 +224,22 @@
 					}
 				});
 			},
+			loadBatchInfo() {
+				if (!this.batchId) return;
+				this.$core.get({
+					url: 'xiluxc.jj_order/batch_deposit_info',
+					data: { batch_id: this.batchId },
+					loading: true,
+					success: ret => {
+						let d = ret.data;
+						this.batchItems = d.items || [];
+						this.batchTotalDeposit = Number(d.total_amount) || 0;
+					},
+					fail: () => {
+						return false;
+					}
+				});
+			},
 			onPay() {
 				if (!this.isAgree) {
 					uni.showToast({ title: '请同意《履约保证协议》', icon: 'none' });
@@ -145,6 +248,13 @@
 				if (this.paying) return;
 				this.paying = true;
 
+				if (this.isBatch) {
+					this.doBatchPay();
+				} else {
+					this.doSinglePay();
+				}
+			},
+			doSinglePay() {
 				this.$core.post({
 					url: 'xiluxc.jj_order/pay_deposit',
 					data: {
@@ -152,12 +262,10 @@
 						pay_type: this.payType === 'wxpay' ? 1 : 2
 					},
 					success: ret => {
-						// debug模式：后端已模拟支付成功，直接走完成流程
 						if (ret.data && ret.data.mock_paid) {
 							this.onPaySuccess();
 							return;
 						}
-						// 正式环境：调起真实支付
 						if (this.payType === 'wxpay') {
 							this.wxPay(ret.data);
 						} else {
@@ -170,12 +278,35 @@
 					}
 				});
 			},
-			wxPay(wxconfig) {
+			doBatchPay() {
+				this.$core.post({
+					url: 'xiluxc.jj_order/pay_batch_deposit',
+					data: {
+						batch_id: this.batchId,
+						pay_type: this.payType === 'wxpay' ? 1 : 2
+					},
+					success: ret => {
+						if (ret.data && ret.data.mock_paid) {
+							this.onBatchPaySuccess(ret.data);
+							return;
+						}
+						if (this.payType === 'wxpay') {
+							this.wxPay(ret.data, true);
+						} else {
+							this.onBatchPaySuccess(ret.data);
+						}
+					},
+					fail: err => {
+						this.paying = false;
+						return false;
+					}
+				});
+			},
+			wxPay(wxconfig, isBatch) {
 				let page = this;
+				let onSuccess = isBatch ? function() { page.onBatchPaySuccess(wxconfig); } : function() { page.onPaySuccess(); };
 				// #ifdef MP-WEIXIN
-				this.$core.payment(wxconfig, function() {
-					page.onPaySuccess();
-				}, function() {
+				this.$core.payment(wxconfig, onSuccess, function() {
 					page.paying = false;
 				});
 				// #endif
@@ -195,9 +326,7 @@
 						package: wxconfig.package,
 						signType: wxconfig.signType,
 						paySign: wxconfig.paySign,
-						success: function() {
-							page.onPaySuccess();
-						},
+						success: onSuccess,
 						cancel: function() {
 							page.paying = false;
 							uni.showToast({ title: '取消支付', icon: 'none' });
@@ -212,23 +341,32 @@
 			},
 			onPaySuccess() {
 				this.paying = false;
-				let param = encodeURIComponent(JSON.stringify({
-					orderId: this.orderId,
-					productName: this.orderInfo.productName,
-					coverImage: this.orderInfo.coverImage,
-					companyName: this.orderInfo.companyName,
-					contractUploadHours: this.orderInfo.contractUploadHours,
-					executionHours: this.orderInfo.executionHours
-				}));
-				let contractUrl = '/pages/jj/jj_contract/jj_contract?orderId=' + this.orderId + '&param=' + param;
 				uni.showModal({
 					title: '提示',
-					content: '保证金缴纳成功！已冻结至托管账户。',
+					content: '保证金缴纳成功！已冻结至托管账户，请尽快上传合同。',
 					showCancel: false,
 					success() {
-						uni.redirectTo({ url: contractUrl });
+						uni.navigateBack();
 					}
 				});
+			},
+			onBatchPaySuccess(data) {
+				this.paying = false;
+				let orderCount = data.order_count || this.batchItems.length;
+				// 批量支付成功后跳转到订单列表页
+				uni.showModal({
+					title: '提示',
+					content: orderCount + '笔订单保证金缴纳成功！已冻结至托管账户，请尽快上传合同。',
+					showCancel: false,
+					success() {
+						// 跳转到居间人订单列表（待上传合同状态）
+						uni.redirectTo({ url: '/pages/jj/jj_main/jj_main?tab=orders&status=3' });
+					}
+				});
+			},
+			formatPrice(price) {
+				if (!price && price !== 0) return '0.00';
+				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			}
 		}
 	}
@@ -244,6 +382,10 @@
 	}
 
 	.detail-row {
+		padding: 24rpx 0;
+	}
+
+	.batch-order-item {
 		padding: 24rpx 0;
 	}
 
@@ -299,6 +441,10 @@
 	/* PC 端适配 */
 	@media screen and (min-width: 768px) {
 		.detail-row {
+			padding: 16px 0;
+		}
+
+		.batch-order-item {
 			padding: 16px 0;
 		}
 

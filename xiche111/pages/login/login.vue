@@ -252,12 +252,11 @@
 				} else if (roleType == 2) {
 					// 工厂角色
 					if (parseInt(userinfo.isFactory) == 1) {
-						// 已完成工厂认证，进入首页
-						uni.switchTab({ url: '/pages/index/index' });
+						// 已完成工厂认证，进入工厂首页
+						uni.redirectTo({ url: '/pages/fc/fc_main/fc_main' });
 					} else {
-						// 未认证，进入工厂认证页（待开发）
-						// TODO: 替换为工厂认证页路径
-						uni.showToast({ title: '请完成企业认证', icon: 'none' });
+						// 未认证，跳转到企业认证页
+						uni.redirectTo({ url: '/pages/fc/fc_auth/fc_auth' });
 					}
 				} else {
 					uni.navigateBack({ delta: 1 });

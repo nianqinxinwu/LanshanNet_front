@@ -2,13 +2,16 @@
 	<view>
 		<view class="container bg-f5">
 			<view class="jj-page-wrap p30">
-				<!-- 物流类型切换 -->
+				<!-- 物流方式标识 -->
 				<view class="jj-box mb30">
-					<view class="type-tabs flex-box">
-						<view class="type-tab flex-grow-1 tc" :class="{ active: logisticsType === 'platform' }"
-							@click="logisticsType = 'platform'">平台物流</view>
-						<view class="type-tab flex-grow-1 tc" :class="{ active: logisticsType === 'self' }"
-							@click="logisticsType = 'self'">自提</view>
+					<view class="logistics-type-bar flex-box">
+						<view class="type-icon">
+							<text class="fs22 colf">{{ logisticsType === 'self' ? '提' : '运' }}</text>
+						</view>
+						<view class="ml15">
+							<view class="fs30 fwb col1">{{ logisticsType === 'self' ? '买方自提' : '工厂代发' }}</view>
+							<view class="fs24 col9 mt5">{{ logisticsType === 'self' ? '买方到工厂自行提货' : '由工厂安排物流发货' }}</view>
+						</view>
 					</view>
 				</view>
 
@@ -162,11 +165,10 @@
 				orderId: '',
 				logisticsType: 'platform',
 				logisticsInfo: {
-					companyName: '极速达物流',
-					trackingNo: 'JSD2026020800001',
-					status: 'signed',   // pending | shipped | transit | signed
-					rebateAmount: 580.00,
-					companyType: 'fast'  // fast=极速达 | high=佣金王 | cheap=省钱王
+					companyName: '',
+					trackingNo: '',
+					status: 'pending',
+					rebateAmount: 0,
 				},
 				logisticsTimeline: [],
 				selfPickupInfo: {
@@ -315,26 +317,20 @@
 		color: #FFFFFF;
 	}
 
-	/* 类型切换Tab */
-	.type-tabs {
-		background: #F5F7FB;
-		border-radius: 12rpx;
-		padding: 6rpx;
+	/* 物流方式标识 */
+	.logistics-type-bar {
+		align-items: center;
 	}
 
-	.type-tab {
-		line-height: 72rpx;
-		height: 72rpx;
-		font-size: 28rpx;
-		color: #666666;
-		border-radius: 10rpx;
-
-		&.active {
-			background: #FFFFFF;
-			color: #FE4B01;
-			font-weight: bold;
-			box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-		}
+	.type-icon {
+		width: 56rpx;
+		height: 56rpx;
+		background: #FE4B01;
+		border-radius: 12rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
 	}
 
 	.detail-row {
@@ -502,13 +498,6 @@
 
 	/* PC 端适配 */
 	@media screen and (min-width: 768px) {
-		.type-tab {
-			height: 44px;
-			line-height: 44px;
-			font-size: 15px;
-			cursor: pointer;
-		}
-
 		.detail-row {
 			padding: 16px 0;
 		}

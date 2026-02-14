@@ -119,6 +119,14 @@
 						isTab: false
 					},
 					{
+						key: 'cart',
+						label: '商品清单',
+						icon: '/static/icon/icon_foot3_uc.png',
+						iconActive: '/static/icon/icon_foot3_sc.png',
+						url: '/pages/jj/jj_cart/jj_cart',
+						isTab: false
+					},
+					{
 						key: 'orders',
 						label: '订单',
 						icon: '/static/icon/icon_foot4_uc.png',

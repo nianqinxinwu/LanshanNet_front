@@ -9,8 +9,10 @@
 			<view class="jj-page-wrap p30">
 				<!-- 商品摘要 -->
 				<view class="jj-box mb30">
-					<view class="fs34 fwb col1 lh36 mb20">商品信息</view>
-					<view class="flex-box">
+					<view class="fs34 fwb col1 lh36 mb20">商品信息 <text v-if="isBatch" class="fs24 col9">({{ batchItems.length }}件商品)</text></view>
+
+					<!-- 单商品模式 -->
+					<view v-if="!isBatch" class="flex-box">
 						<image :src="productInfo.coverImage" mode="aspectFill" class="product-thumb"></image>
 						<view class="flex-grow-1 ml20">
 							<view class="fs28 fwb col1 m-ellipsis">{{ productInfo.name }}</view>
@@ -19,24 +21,34 @@
 								<text class="fs30 fwb col4">{{ formatPrice(productInfo.price) }}</text>
 								<text class="fs22 col9"> / {{ productInfo.unit }}</text>
 							</view>
-							<view class="commission-tag mt10">佣金 {{ productInfo.commission }}%</view>
+							<view class="flex-box mt10">
+								<view class="commission-tag">佣金 {{ productInfo.commission }}%</view>
+								<view class="fs22 col5 ml15" v-if="quantity > 1">x{{ quantity }}</view>
+							</view>
+						</view>
+					</view>
+
+					<!-- 多商品模式 -->
+					<view v-if="isBatch">
+						<view class="batch-item flex-box" :class="{ bb: idx < batchItems.length - 1 }" v-for="(item, idx) in batchItems" :key="idx">
+							<view class="flex-grow-1">
+								<view class="fs26 fwb col1 m-ellipsis">{{ item.name }}</view>
+								<view class="fs22 col9 mt5">¥{{ formatPrice(item.price) }} / {{ item.unit }} x{{ item.quantity }}</view>
+							</view>
+							<view class="fs26 fwb col4 ml15">¥{{ formatPrice(item.price * item.quantity) }}</view>
 						</view>
 					</view>
 				</view>
 
-				<!-- 买家信息区域 -->
+				<!-- 买家信息区域（暂时注释，后期需要时取消注释）
 				<view class="jj-box mb30">
 					<view class="flex-box mb20">
 						<view class="fs34 fwb col1 lh36 flex-grow-1">买家信息</view>
 						<view class="select-buyer-btn fs24" @click="openBuyerPopup">{{ selectedBuyer ? '重新选择' : '选择买家' }}</view>
 					</view>
-
-					<!-- 未选择买家时 -->
 					<view v-if="!selectedBuyer" class="empty-buyer" @click="openBuyerPopup">
 						<view class="fs28 col9 tc">点击选择已保存的买家信息</view>
 					</view>
-
-					<!-- 已选择买家时 -->
 					<view v-else class="buyer-info-card">
 						<view class="fs30 fwb col1">{{ companyName }}</view>
 						<view class="fs26 col5 mt10">{{ contactName }}　{{ contactPhone }}</view>
@@ -45,6 +57,7 @@
 						<view v-if="taxNumber" class="fs22 col9 mt5">税务登记证号: {{ taxNumber }}</view>
 					</view>
 				</view>
+			-->
 
 				<!-- 协议勾选区域 -->
 				<view class="flex-box flex-center fs26 col6 mb30 flex-wrap">
@@ -55,15 +68,13 @@
 			</view>
 		</view>
 
-		<!-- 买家选择弹框 -->
+		<!-- 买家选择弹框（暂时注释，后期需要时取消注释）
 		<view v-if="showBuyerPopup" class="popup-mask" @click.self="showBuyerPopup = false">
 			<view class="popup-content">
 				<view class="popup-header flex-box">
 					<view class="fs34 fwb col1 flex-grow-1">{{ showAddForm ? '新增买家信息' : '选择买家' }}</view>
 					<view class="fs28 col9" @click="showAddForm ? (showAddForm = false) : (showBuyerPopup = false)">{{ showAddForm ? '返回' : '关闭' }}</view>
 				</view>
-
-				<!-- 买家列表 -->
 				<view v-if="!showAddForm" class="popup-body">
 					<view v-if="buyerList.length === 0" class="fs28 col9 tc ptb30">暂无保存的买家信息</view>
 					<view v-for="(item, idx) in buyerList" :key="item.id"
@@ -81,8 +92,6 @@
 						<view class="fs28 col4 tc">+ 新增买家信息</view>
 					</view>
 				</view>
-
-				<!-- 新增买家表单 -->
 				<view v-if="showAddForm" class="popup-body">
 					<view class="inp_nav flex-box col1 fs30 bb">
 						<view class="col5 label">企业名称</view>
@@ -114,42 +123,60 @@
 				</view>
 			</view>
 		</view>
+		-->
 	</view>
 </template>
 
 <script>
-	var validate = require("../../../xilu/validate.js");
+	// var validate = require("../../../xilu/validate.js"); // 买家验证暂时注释
 
 	export default {
 		data() {
 			return {
 				productId: '',
+				quantity: 1,
+				cartId: 0,
+				isBatch: false,
+				batchItems: [],
 				productInfo: {},
-				companyName: '',
-				address: '',
-				contactName: '',
-				contactPhone: '',
-				creditCode: '',
-				taxNumber: '',
+				// 买家信息字段（暂时注释，后期需要时取消注释）
+				// companyName: '',
+				// address: '',
+				// contactName: '',
+				// contactPhone: '',
+				// creditCode: '',
+				// taxNumber: '',
 				isAgree: false,
-				selectedBuyer: null,
-				buyerList: [],
-				showBuyerPopup: false,
-				showAddForm: false,
-				newBuyer: {
-					companyName: '',
-					address: '',
-					contactName: '',
-					contactPhone: '',
-					creditCode: '',
-					taxNumber: ''
-				}
+				// selectedBuyer: null,
+				// buyerList: [],
+				// showBuyerPopup: false,
+				// showAddForm: false,
+				// newBuyer: {
+				// 	companyName: '',
+				// 	address: '',
+				// 	contactName: '',
+				// 	contactPhone: '',
+				// 	creditCode: '',
+				// 	taxNumber: ''
+				// }
 			}
 		},
 		onLoad(options) {
-			this.productId = options.productId;
-			this.loadProductInfo();
-			this.loadBuyerList();
+			if (options.cartData) {
+				try {
+					let cartData = JSON.parse(decodeURIComponent(options.cartData));
+					this.isBatch = true;
+					this.batchItems = cartData;
+				} catch (e) {
+					console.log('cartData parse error', e);
+				}
+			} else {
+				this.productId = options.productId;
+				this.quantity = parseInt(options.quantity) || 1;
+				this.cartId = parseInt(options.cartId) || 0;
+				this.loadProductInfo();
+			}
+			// this.loadBuyerList(); // 买家信息暂时注释
 		},
 		methods: {
 			loadProductInfo() {
@@ -172,6 +199,7 @@
 					fail: () => { return false; }
 				});
 			},
+			/* 买家相关方法（暂时注释，后期需要时取消注释）
 			loadBuyerList() {
 				this.$core.get({
 					url: 'xiluxc.jj_buyer_info/index',
@@ -229,7 +257,6 @@
 						this.resetNewBuyer();
 						this.showAddForm = false;
 						this.loadBuyerList();
-						// 自动选中新保存的买家
 						if (savedBuyer && savedBuyer.id) {
 							this.onSelectBuyer(savedBuyer);
 						}
@@ -237,14 +264,15 @@
 					fail: () => { return false; }
 				});
 			},
+			*/
 			onSubmit() {
 				if (!this.isAgree) {
 					uni.showToast({ title: '请同意接单服务协议', icon: 'none' });
 					return;
 				}
 
-				let formData = {
-					productId: this.productId,
+				/* 买家信息验证（暂时注释，后期需要时取消注释）
+				let buyerData = {
 					companyName: this.companyName,
 					address: this.address,
 					contactName: this.contactName,
@@ -261,35 +289,65 @@
 					{ name: 'creditCode', nameChn: '信用代码', rules: ['require'], errorMsg: { require: '请输入统一社会信用代码' } }
 				];
 
-				if (!validate.check(formData, rule)) {
+				if (!validate.check(buyerData, rule)) {
 					uni.showToast({ title: validate.getError()[0], icon: 'none' });
 					return;
 				}
+				*/
 
-				this.$core.post({
-					url: 'xiluxc.jj_order/submit',
-					data: formData,
-					success: ret => {
-						let orderData = ret.data;
-						this.goDeposit(orderData);
-					},
-					fail: () => { return false; }
-				});
+				if (this.isBatch) {
+					let items = this.batchItems.map(i => ({
+						productId: i.productId,
+						quantity: i.quantity,
+						cartId: i.cartId || 0
+					}));
+					this.$core.post({
+						url: 'xiluxc.jj_order/batch_submit',
+						data: { items: JSON.stringify(items) },
+						success: ret => {
+							this.goBatchDeposit(ret.data);
+						},
+						fail: () => { return false; }
+					});
+				} else {
+					let formData = {
+						productId: this.productId,
+						quantity: this.quantity,
+						cart_id: this.cartId
+					};
+					this.$core.post({
+						url: 'xiluxc.jj_order/submit',
+						data: formData,
+						success: ret => {
+							this.goDeposit(ret.data);
+						},
+						fail: () => { return false; }
+					});
+				}
 			},
 			goDeposit(orderData) {
 				let param = encodeURIComponent(JSON.stringify({
 					productName: this.productInfo.name,
 					coverImage: this.productInfo.coverImage,
-					companyName: this.companyName,
+					companyName: '', // 买家信息暂时注释
 					commission: this.productInfo.commission,
 					commissionAmount: orderData.commission_amount || 0,
 					depositRate: orderData.deposit_rate || 0,
-					contractUploadHours: orderData.contract_upload_hours || 24,
+					contractUploadHours: orderData.contract_upload_hours || 0,
 					executionHours: orderData.execution_hours || 72
 				}));
 				uni.redirectTo({
 					url: '/pages/jj/jj_deposit/jj_deposit?orderId=' + orderData.order_id + '&param=' + param
 				});
+			},
+			goBatchDeposit(batchData) {
+				uni.redirectTo({
+					url: '/pages/jj/jj_deposit/jj_deposit?batchId=' + batchData.batch_id
+				});
+			},
+			formatPrice(price) {
+				if (!price && price !== 0) return '0.00';
+				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			}
 		}
 	}
@@ -313,6 +371,11 @@
 		border-radius: 6rpx;
 	}
 
+	.batch-item {
+		padding: 20rpx 0;
+	}
+
+	/* 买家相关样式（暂时注释，后期需要时取消注释）
 	.select-buyer-btn {
 		color: #FE4B01;
 		border: 1px solid #FE4B01;
@@ -342,6 +405,7 @@
 			flex-shrink: 0;
 		}
 	}
+	*/
 
 	.agree-ico {
 		width: 38rpx;
@@ -353,7 +417,7 @@
 		padding: 10rpx 30rpx;
 	}
 
-	/* 弹框样式 */
+	/* 弹框样式（暂时注释，后期需要时取消注释）
 	.popup-mask {
 		position: fixed;
 		top: 0;
@@ -414,13 +478,16 @@
 		padding: 30rpx 0;
 		border-top: 1px solid #F0F0F0;
 	}
+	*/
 
 	/* PC端适配 */
 	@media screen and (min-width: 768px) {
+		/* 买家相关PC适配（暂时注释，后期需要时取消注释）
 		.inp_nav {
 			height: auto;
 			padding: 14px 0;
 		}
+		*/
 
 		.foot_nav {
 			max-width: 1200px;
@@ -433,6 +500,7 @@
 			cursor: pointer;
 		}
 
+		/* 买家相关PC适配（暂时注释，后期需要时取消注释）
 		.select-buyer-btn {
 			cursor: pointer;
 
@@ -470,6 +538,7 @@
 			margin: 0 auto;
 			border-radius: 12px 12px 0 0;
 		}
+		*/
 	}
 
 	@supports (bottom: constant(safe-area-inset-bottom)) or (bottom: env(safe-area-inset-bottom)) {

@@ -44,6 +44,13 @@
 						url: '/pages/jj/jj_products/jj_products'
 					},
 					{
+						key: 'cart',
+						label: '商品清单',
+						icon: '/static/icon/icon_cart_uc.svg',
+						iconActive: '/static/icon/icon_cart_sc.svg',
+						url: '/pages/jj/jj_cart/jj_cart'
+					},
+					{
 						key: 'orders',
 						label: '订单',
 						icon: '/static/icon/icon_foot4_uc.png',
