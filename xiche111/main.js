@@ -5,10 +5,12 @@ import core from './xilu/core.js';
 import util from './xilu/util.js';
 import responsive from './xilu/responsive.js';
 import formatters from './xilu/formatters.js';
+import im from './xilu/im.js';
 
 // 挂载
 Vue.prototype.$core = core; //core
 Vue.prototype.$util = util; //util
+Vue.prototype.$im = im; // IM即时通讯
 Vue.mixin(responsive); // 响应式适配（全局注入 isPC/isMobile）
 // 全局注入公共格式化方法（formatPrice / formatCountdown / formatShortPrice / openAgreement）
 Vue.mixin({

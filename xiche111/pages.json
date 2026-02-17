@@ -646,6 +646,21 @@
 			{
 				"navigationBarTitleText" : "提现记录"
 			}
+		},
+		{
+			"path" : "pages/im/im_chat_list/im_chat_list",
+			"style" :
+			{
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path" : "pages/im/im_chat/im_chat",
+			"style" :
+			{
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"tabBar": {

@@ -190,6 +190,11 @@
 			}
 		},
 		onLoad(options) {
+			const userinfo = this.$core.getUserinfo();
+			if (!userinfo || !userinfo.token) {
+				uni.redirectTo({ url: '/pages/login/login' });
+				return;
+			}
 			if (options.batchId) {
 				this.batchId = options.batchId;
 				this.isBatch = true;

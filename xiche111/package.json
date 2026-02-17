@@ -40,6 +40,8 @@
     "vue": "~2.6.14"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.18.6",
+    "@babel/plugin-proposal-optional-chaining": "^7.21.0",
     "@dcloudio/types": "^3.3.2",
     "@dcloudio/uni-helper-json": "*",
     "@dcloudio/vue-cli-plugin-hbuilderx": "^2.0.2-4080720251210002",
@@ -49,7 +51,7 @@
     "@vue/cli-service": "~4.5.0",
     "cross-env": "^7.0.3",
     "postcss-comment": "^2.0.0",
-    "sass": "^1.49.8",
+    "sass": "^1.77.8",
     "sass-loader": "^10.4.1",
     "vue-template-compiler": "~2.6.14"
   },

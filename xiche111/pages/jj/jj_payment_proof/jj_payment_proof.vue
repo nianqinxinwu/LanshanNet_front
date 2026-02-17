@@ -97,6 +97,11 @@ export default {
 		};
 	},
 	onLoad(options) {
+		const userinfo = this.$core.getUserinfo();
+		if (!userinfo || !userinfo.token) {
+			uni.redirectTo({ url: '/pages/login/login' });
+			return;
+		}
 		this.orderId = options.orderId || 0;
 		if (this.orderId) {
 			this.loadOrderInfo();

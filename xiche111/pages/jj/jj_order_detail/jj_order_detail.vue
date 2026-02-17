@@ -376,6 +376,11 @@
 			}
 		},
 		onLoad(options) {
+			const userinfo = this.$core.getUserinfo();
+			if (!userinfo || !userinfo.token) {
+				uni.redirectTo({ url: '/pages/login/login' });
+				return;
+			}
 			if (options.orderId) {
 				this.orderId = options.orderId;
 			}

@@ -90,6 +90,11 @@
 			}
 		},
 		onLoad(options) {
+			const userinfo = this.$core.getUserinfo();
+			if (!userinfo || !userinfo.token) {
+				uni.redirectTo({ url: '/pages/login/login' });
+				return;
+			}
 			if (options.tab && ['home', 'products', 'cart', 'orders', 'profile'].indexOf(options.tab) !== -1) {
 				this.activeTab = options.tab;
 			}
