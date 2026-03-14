@@ -6,7 +6,7 @@
 				<u-icon name="arrow-left" color="#333" size="20"></u-icon>
 			</view>
 			<view class="nav-center">
-				<text class="nav-title">{{ nickname }}<text class="nav-uid">（ID:{{ toUserId }}）</text></text>
+				<text class="nav-title">{{ displayTitle }}<text class="nav-uid">（ID:{{ toUserId }}）</text></text>
 				<text v-if="otherOnline" class="online-status">在线</text>
 			</view>
 			<view class="nav-right"></view>
@@ -79,6 +79,9 @@
 							<view v-if="msg._sending" class="sending-status">
 								<u-loading-icon size="14"></u-loading-icon>
 							</view>
+							<view v-else-if="msg._failed" class="sending-status failed-icon" @click="resendMsg(msg)">
+								<u-icon name="error-circle" color="#f56c6c" size="18"></u-icon>
+							</view>
 						</view>
 
 						<!-- 自己头像 -->
@@ -122,6 +125,8 @@ export default {
 			toUserType: '',
 			toUserId: 0,
 			nickname: '',
+			companyName: '',
+			contactName: '',
 			otherAvatar: '/assets/img/avatar.png',
 			otherOnline: false,
 			myAvatar: '/assets/img/avatar.png',
@@ -137,6 +142,17 @@ export default {
 			scrollHeight: 500,
 			wsHandler: null
 		};
+	},
+	computed: {
+		displayTitle() {
+			if (this.companyName && this.contactName) {
+				return this.companyName + '-' + this.contactName;
+			}
+			if (this.companyName) {
+				return this.companyName;
+			}
+			return this.nickname;
+		}
 	},
 	onLoad(options) {
 		this.conversationId = options.conversation_id || '';
@@ -157,9 +173,18 @@ export default {
 			this.myAvatar = userinfo.avatar || '/assets/img/avatar.png';
 		}
 
-		this.loadHistory();
+		// 确保WebSocket已连接（H5环境刷新页面后需要重新连接）
+		this.ensureImConnected();
+
+		// 如果没有conversationId，先创建/获取会话
+		if (!this.conversationId && this.toUserType && this.toUserId) {
+			this.startConversation();
+		} else {
+			this.loadHistory();
+			this.markRead();
+		}
+
 		this.loadOtherInfo();
-		this.markRead();
 		this.listenWs();
 	},
 	onUnload() {
@@ -170,8 +195,60 @@ export default {
 			uni.navigateBack();
 		},
 
+		// 确保IM WebSocket已连接
+		ensureImConnected() {
+			const userinfo = this.$core.getUserinfo();
+			if (!userinfo || !userinfo.token) {
+				console.log('[IM] 用户未登录，无法连接WebSocket');
+				return;
+			}
+
+			// 检查是否已连接
+			if (this.$im.isConnected()) {
+				console.log('[IM] WebSocket已连接');
+				return;
+			}
+
+			// 未连接则调用App的初始化方法
+			console.log('[IM] WebSocket未连接，正在连接...');
+			try {
+				getApp().initImConnection();
+			} catch (e) {
+				console.error('[IM] 连接失败:', e);
+			}
+		},
+
+		// 创建/获取会话（用于"联系XX"按钮场景）
+		startConversation() {
+			this.$core.post({
+				url: 'xiluxc.im/start_conversation',
+				data: {
+					to_user_type: this.toUserType,
+					to_user_id: this.toUserId
+				},
+				loading: true,
+				success: (ret) => {
+					this.conversationId = ret.data.conversation_id;
+					if (ret.data.other_user) {
+						this.nickname = ret.data.other_user.nickname || this.nickname;
+						this.otherAvatar = ret.data.other_user.avatar || this.otherAvatar;
+					}
+					// 获取到conversationId后加载历史消息
+					this.loadHistory();
+					this.markRead();
+				},
+				fail: () => {
+					uni.showToast({ title: '创建会话失败', icon: 'none' });
+				}
+			});
+		},
+
 		// 加载历史消息
 		loadHistory() {
+			if (!this.conversationId) {
+				return; // 没有conversationId时不加载
+			}
+
 			let lastId = 0;
 			if (this.messageList.length > 0) {
 				lastId = this.messageList[0].id || 0;
@@ -222,6 +299,8 @@ export default {
 					this.nickname = ret.data.nickname || this.nickname;
 					this.otherAvatar = ret.data.avatar || this.otherAvatar;
 					this.otherOnline = ret.data.online || false;
+					this.companyName = ret.data.company_name || '';
+					this.contactName = ret.data.contact_name || '';
 				}
 			});
 		},
@@ -325,6 +404,16 @@ export default {
 						this.$set(this.messageList[idx], 'createtime', data.createtime);
 						this.$set(this.messageList[idx], '_sending', false);
 					}
+				} else if (data.type === 'error') {
+					// 服务端返回错误（如DB断连），标记消息发送失败
+					if (data.client_msg_id) {
+						const idx = this.messageList.findIndex(m => m.client_msg_id === data.client_msg_id);
+						if (idx > -1) {
+							this.$set(this.messageList[idx], '_sending', false);
+							this.$set(this.messageList[idx], '_failed', true);
+						}
+					}
+					uni.showToast({ title: data.msg || '发送失败', icon: 'none' });
 				} else if (data.type === 'messages_read') {
 					if (data.conversation_id === this.conversationId) {
 						// 对方已读，更新状态
@@ -432,6 +521,21 @@ export default {
 
 		onInputBlur() {
 			this.keyboardHeight = 0;
+		},
+
+		// 重发消息
+		resendMsg(msg) {
+			uni.showModal({
+				title: '提示',
+				content: '是否重新发送该消息？',
+				success: (res) => {
+					if (res.confirm) {
+						this.$set(msg, '_failed', false);
+						this.$set(msg, '_sending', true);
+						this.$im.sendChat(msg.to_user_type, msg.to_user_id, msg.msg_type, msg.content, msg.client_msg_id);
+					}
+				}
+			});
 		},
 
 		/**
@@ -708,6 +812,10 @@ export default {
 /* 发送状态 */
 .sending-status {
 	margin: 0 8rpx;
+}
+
+.failed-icon {
+	cursor: pointer;
 }
 
 /* 输入栏 */

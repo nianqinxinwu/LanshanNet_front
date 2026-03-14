@@ -433,6 +433,14 @@ module.exports = {
 	//登出
 	logout() {
 		this.removeCache('userinfo');
+
+		// 断开IM WebSocket连接
+		try {
+			getApp().disconnectIm();
+		} catch (e) {
+			console.log('[IM] 断开连接失败:', e);
+		}
+
 		uni.$emit(getApp().globalData.Event.loginOut, {})
 	},
 	//h5静默登录获取openid

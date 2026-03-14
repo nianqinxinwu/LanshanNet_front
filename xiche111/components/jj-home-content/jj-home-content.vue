@@ -45,6 +45,15 @@
 					</view>
 					<view class="fs24 col3 mt10 tc">浏览商品</view>
 				</view>
+				<view class="quick-item" @click="onQuickEntry('im')">
+					<view class="quick-icon-wrap" style="background: linear-gradient(135deg, #9254de, #b37feb); position: relative;">
+						<text class="quick-icon-text">💬</text>
+						<view v-if="unreadCount > 0" class="unread-badge">
+							<text class="unread-text">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
+						</view>
+					</view>
+					<view class="fs24 col3 mt10 tc">消息</view>
+				</view>
 				<view class="quick-item" @click="onQuickEntry('cart')">
 					<view class="quick-icon-wrap" style="background: linear-gradient(135deg, #FE4B01, #FF8C00);">
 						<image src="/static/icon/icon_cart_sc.svg" mode="aspectFill" class="quick-icon"></image>
@@ -111,11 +120,13 @@
 					teamScale: 0,
 					growthRate: 0
 				},
-				todoList: []
+				todoList: [],
+				unreadCount: 0
 			}
 		},
 		mounted() {
 			this.loadDashboard();
+			this.loadUnreadCount();
 		},
 		methods: {
 			loadDashboard() {
@@ -142,6 +153,16 @@
 						// 构建待办事项
 						this.buildTodoList(d.todo);
 						this.$nextTick(() => { this.drawRadar(); });
+					},
+					fail: () => { return false; }
+				});
+			},
+			loadUnreadCount() {
+				this.$core.get({
+					url: 'xiluxc.im/unread_count',
+					loading: false,
+					success: ret => {
+						this.unreadCount = ret.data.count || 0;
 					},
 					fail: () => { return false; }
 				});
@@ -290,6 +311,8 @@
 					this.$emit('switchTab', type);
 				} else if (type === 'bid') {
 					uni.navigateTo({ url: '/pages/jj/jj_bid_board/jj_bid_board' });
+				} else if (type === 'im') {
+					uni.navigateTo({ url: '/pages/im/im_chat_list/im_chat_list' });
 				} else {
 					uni.showToast({ title: '功能开发中', icon: 'none' });
 				}
@@ -354,7 +377,7 @@
 
 	.quick-grid {
 		display: grid;
-		grid-template-columns: repeat(4, 1fr);
+		grid-template-columns: repeat(3, 1fr);
 		gap: 20rpx;
 	}
 
@@ -373,12 +396,41 @@
 		align-items: center;
 		justify-content: center;
 		box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.12);
+		position: relative;
 	}
 
 	.quick-icon {
 		width: 44rpx;
 		height: 44rpx;
 		filter: brightness(0) invert(1);
+	}
+
+	.quick-icon-text {
+		font-size: 40rpx;
+		line-height: 1;
+	}
+
+	.unread-badge {
+		position: absolute;
+		top: -6rpx;
+		right: -6rpx;
+		min-width: 32rpx;
+		height: 32rpx;
+		background: #ff4d4f;
+		border-radius: 16rpx;
+		padding: 0 8rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 2rpx solid #fff;
+	}
+
+	.unread-text {
+		font-size: 20rpx;
+		color: #fff;
+		font-weight: bold;
+		line-height: 1;
+		transform: scale(0.9);
 	}
 
 	.todo-item {

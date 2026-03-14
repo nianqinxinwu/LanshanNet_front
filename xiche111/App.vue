@@ -17,19 +17,50 @@
 					}
 				}
 			});
-			// setTimeout(function() {
-			// 	// app初始化完成后再执行
-			// 	app.$core.get({
-			// 		url: 'xiluxc.common/init_config',
-			// 		data: {},
-			// 		loading: false,
-			// 		success: (ret) => {
-			// 			app.globalData.config = ret.data.config;
-			// 		}
-			// 	})
-			// 	//1.定位
-			// }, 1);
 
+			// 初始化IM WebSocket连接
+			this.initImConnection();
+
+		},
+
+		methods: {
+			/**
+			 * 初始化IM WebSocket连接
+			 * 只在用户已登录时连接
+			 */
+			initImConnection() {
+				const userinfo = this.$core.getUserinfo();
+				if (!userinfo || !userinfo.token) {
+					console.log('[IM] 用户未登录，跳过WebSocket连接');
+					return;
+				}
+
+				const wsUrl = this.globalData.wsUrl;
+				if (!wsUrl) {
+					console.error('[IM] WebSocket URL未配置');
+					return;
+				}
+
+				console.log('[IM] 开始连接WebSocket:', wsUrl);
+
+				this.$im.connect(
+					wsUrl,
+					'user',  // 用户类型
+					userinfo.token,
+					(data) => {
+						console.log('[IM] WebSocket连接成功, 用户ID:', data.uid);
+					}
+				);
+			},
+
+			/**
+			 * 断开IM WebSocket连接
+			 * 用户登出时调用
+			 */
+			disconnectIm() {
+				console.log('[IM] 断开WebSocket连接');
+				this.$im.disconnect();
+			}
 		},
 		globalData: {
 			//小程序配置的接口请求域名，为项目部署的服务器路径
@@ -37,7 +68,14 @@
 			// apiBaseUri: "https://xiche.zzlanshan.site/api",
 			// apiBaseUri: "http://localhost:8000/api",
 			// apiBaseUri: "http://192.168.1.149:8000/api",
-			apiBaseUri: "http://192.168.3.236:8000/api",
+			// apiBaseUri: "http://192.168.3.236:8000/api",  // 旧配置
+			// apiBaseUri: "http://192.168.3.19:8000/api",  // 本地测试 - 2026-03-02 (测试通过✅)
+			apiBaseUri: "https://one.zzlanshan.site/api",  // 线上环境 ✅
+
+			// WebSocket配置 - IM即时通讯
+			// wsUrl: "ws://192.168.3.19:8282",  // 本地测试
+			wsUrl: "wss://one.zzlanshan.site/wss",  // 线上环境 (WSS加密) ✅
+
 			//web目录
             webDir:'/web/',
 			////前端上传图片补全域名，如oss的https://xxxx.oss-cn-shanghai.aliyuncs.com，或https://your.site.com

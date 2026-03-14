@@ -175,6 +175,10 @@
 						let userinfo = ret.data.userinfo;
 						that.$core.setUserinfo(userinfo);
 						uni.$emit("user_update", {});
+
+						// 登录成功后初始化IM WebSocket连接
+						getApp().initImConnection();
+
 						that.redirectAfterLogin(userinfo);
 					}
 				});

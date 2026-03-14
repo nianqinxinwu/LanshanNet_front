@@ -51,6 +51,15 @@
 							</view>
 							<view class="fs24 col3 mt10 tc">浏览商品</view>
 						</view>
+						<view class="quick-item" @click="onQuickEntry('im')">
+							<view class="quick-icon-wrap" style="background: linear-gradient(135deg, #9254de, #b37feb);">
+								<text class="quick-icon-text">💬</text>
+								<view v-if="unreadCount > 0" class="unread-badge">
+									<text class="unread-text">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
+								</view>
+							</view>
+							<view class="fs24 col3 mt10 tc">消息</view>
+						</view>
 						<view class="quick-item" @click="onQuickEntry('bid')">
 							<view class="quick-icon-wrap" style="background: linear-gradient(135deg, #40a9ff, #69c0ff);">
 								<image src="/static/icon/icon_foot3_sc.png" mode="aspectFill" class="quick-icon"></image>
@@ -148,12 +157,14 @@
 					{ type: 'profile', title: '完善个人资料', desc: '补充详细信息提升信誉评分' },
 					{ type: 'guide', title: '查看新手指南', desc: '了解平台规则和操作流程' }
 				],
-				userAvatar: '/static/icon/icon_foot5_sc.png'
+				userAvatar: '/static/icon/icon_foot5_sc.png',
+				unreadCount: 0
 			}
 		},
 		onReady() {
 			this.drawRadar();
 			this.loadAvatar();
+			this.loadUnreadCount();
 		},
 		onShow() {
 			// #ifdef H5
@@ -161,6 +172,7 @@
 				uni.hideTabBar({ animation: false });
 			}
 			// #endif
+			this.loadUnreadCount();
 		},
 		methods: {
 			loadAvatar() {
@@ -172,6 +184,16 @@
 						if (d.profile && d.profile.avatar) {
 							this.userAvatar = d.profile.avatar;
 						}
+					},
+					fail: () => { return false; }
+				});
+			},
+			loadUnreadCount() {
+				this.$core.get({
+					url: 'xiluxc.im/unread_count',
+					loading: false,
+					success: ret => {
+						this.unreadCount = ret.data.count || 0;
 					},
 					fail: () => { return false; }
 				});
@@ -293,10 +315,11 @@
 					'products': '/pages/jj/jj_products/jj_products',
 					'orders': '/pages/jj/jj_orders/jj_orders',
 					'bid': '/pages/jj/jj_bid_board/jj_bid_board',
+					'im': '/pages/im/im_chat_list/im_chat_list',
 					'guide': ''
 				};
 				if (routes[type]) {
-					uni.redirectTo({ url: routes[type] });
+					uni.navigateTo({ url: routes[type] });
 				} else {
 					uni.showToast({ title: '功能开发中', icon: 'none' });
 				}
@@ -393,12 +416,41 @@
 		align-items: center;
 		justify-content: center;
 		box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.12);
+		position: relative;
 	}
 
 	.quick-icon {
 		width: 44rpx;
 		height: 44rpx;
 		filter: brightness(0) invert(1);
+	}
+
+	.quick-icon-text {
+		font-size: 40rpx;
+		line-height: 1;
+	}
+
+	.unread-badge {
+		position: absolute;
+		top: -6rpx;
+		right: -6rpx;
+		min-width: 32rpx;
+		height: 32rpx;
+		background: #ff4d4f;
+		border-radius: 16rpx;
+		padding: 0 8rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 2rpx solid #fff;
+	}
+
+	.unread-text {
+		font-size: 20rpx;
+		color: #fff;
+		font-weight: bold;
+		line-height: 1;
+		transform: scale(0.9);
 	}
 
 	/* 待办事项 */

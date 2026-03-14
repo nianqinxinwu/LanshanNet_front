@@ -124,6 +124,13 @@
 						</view>
 					</view>
 
+				<!-- 协议勾选（仅结算模式显示） -->
+				<view v-if="popupAction === 'checkout'" class="agreement-row flex-box flex-center mt20">
+					<image @click="isAgree = !isAgree" :src="'/static/icon/'+(isAgree ? 'choose_sc' : 'choose_uc')+'.png'" mode="aspectFill" class="agree-ico mr10"></image>
+					<view class="fs24 col6">我已阅读并同意</view>
+					<view class="fs24 col4" @click="openAgreement">《接单服务协议》</view>
+				</view>
+
 					<!-- 确认按钮 -->
 					<view class="popup-footer">
 						<view class="btn5" @click="onConfirmPopup">{{ popupAction === 'cart' ? '确认加入清单' : '立即结算' }}</view>
@@ -143,7 +150,8 @@
 				showDetailPopup: false,
 				popupAction: 'cart',
 				popupQuantity: 1,
-				depositRate: 1
+				depositRate: 1,
+				isAgree: false  // ✨ 新增：协议同意状态
 			}
 		},
 		computed: {
@@ -179,6 +187,8 @@
 					unit: item.unit,
 					commission: Number(item.commission_rate || item.commission) || 0,
 					stock: item.stock,
+					factoryId: item.factory_id || item.factoryId || 0,
+					factoryUserId: (item.factory && item.factory.user_id) || item.factoryUserId || 0,
 					factoryName: (item.factory && item.factory.company_name) || item.factoryName || '',
 					factoryRate: (item.factory && Number(item.factory.fulfill_rate)) || item.factoryRate || 0,
 					craftStandard: item.craft_standard || item.craftStandard || '',
@@ -208,7 +218,16 @@
 				});
 			},
 			onContact() {
-				uni.showToast({ title: '功能开发中', icon: 'none' });
+				// 检查是否有工厂用户ID
+				if (!this.detail.factoryUserId) {
+					uni.showToast({ title: '无法联系该厂家', icon: 'none' });
+					return;
+				}
+
+				// 跳转到IM聊天页面
+				uni.navigateTo({
+					url: `/pages/im/im_chat/im_chat?to_user_type=user&to_user_id=${this.detail.factoryUserId}&nickname=${encodeURIComponent(this.detail.factoryName || '工厂')}`
+				});
 			},
 			onAddToCart() {
 				this.popupAction = 'cart';
@@ -247,9 +266,29 @@
 						fail: () => { return false; }
 					});
 				} else {
+					// ✨ 修改：直接创建订单并跳转到保证金页面
+					if (!this.isAgree) {
+						uni.showToast({ title: '请先同意接单服务协议', icon: 'none' });
+						return;
+					}
+
 					this.showDetailPopup = false;
-					uni.navigateTo({
-						url: '/pages/jj/jj_buyer_form/jj_buyer_form?productId=' + this.id + '&quantity=' + this.popupQuantity
+
+					// 调用创建订单API
+					this.$core.post({
+						url: 'xiluxc.jj_order/submit',
+						data: {
+							productId: this.id,
+							quantity: this.popupQuantity
+						},
+						loading: true,
+						success: ret => {
+							// 创建订单成功，跳转到保证金页面
+							this.goDeposit(ret.data);
+						},
+						fail: () => {
+							return false;
+						}
 					});
 				}
 			},
@@ -263,7 +302,27 @@
 			formatMoney(n) {
 				if (!n && n !== 0) return '0.00';
 				return Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-			}
+			},
+		// ✨ 新增：跳转到保证金页面
+		goDeposit(orderData) {
+			let param = encodeURIComponent(JSON.stringify({
+				productName: this.detail.name,
+				coverImage: this.detail.coverImage,
+				companyName: '',
+				commission: this.detail.commission,
+				commissionAmount: orderData.commission_amount || 0,
+				depositRate: orderData.deposit_rate || 0,
+				contractUploadHours: orderData.contract_upload_hours || 0,
+				executionHours: orderData.execution_hours || 72
+			}));
+			uni.redirectTo({
+				url: '/pages/jj/jj_deposit/jj_deposit?orderId=' + orderData.order_id + '&param=' + param
+			});
+		},
+		// ✨ 新增：打开协议页面
+		openAgreement() {
+			uni.showToast({ title: '协议查看功能开发中', icon: 'none' });
+		}
 		}
 	}
 </script>
@@ -507,5 +566,16 @@
 			padding-bottom: calc(constant(safe-area-inset-bottom) + 130rpx);
 			padding-bottom: calc(env(safe-area-inset-bottom) + 130rpx);
 		}
+	}
+
+	.agreement-row {
+		padding: 20rpx 0;
+		border-top: 1px solid #F0F0F0;
+	}
+
+	.agree-ico {
+		width: 32rpx;
+		height: 32rpx;
+		flex-shrink: 0;
 	}
 </style>

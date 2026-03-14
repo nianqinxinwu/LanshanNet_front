@@ -200,13 +200,20 @@ module.exports = {
 	// --- 内部方法 ---
 
 	_send(data) {
+		console.log('[IM] _send调用, socketTask:', !!socketTask, 'isConnected:', isConnected, 'data:', data);
 		if (socketTask && isConnected) {
+			console.log('[IM] 发送WebSocket消息:', data);
 			socketTask.send({
 				data: JSON.stringify(data),
+				success: () => {
+					console.log('[IM] WebSocket消息发送成功');
+				},
 				fail: (err) => {
-					console.error('[IM] Send failed:', err);
+					console.error('[IM] WebSocket消息发送失败:', err);
 				}
 			});
+		} else {
+			console.error('[IM] 无法发送消息! socketTask:', !!socketTask, 'isConnected:', isConnected);
 		}
 	},
 

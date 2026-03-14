@@ -115,7 +115,6 @@
 					<view class="col5 fs28 fwb">合计缴纳</view>
 					<view class="col4 fs28 fwb">¥{{ formatPrice(Number(order.commissionAmount.replace(/,/g,'')) + Number(order.serviceFee.replace(/,/g,''))) }}</view>
 				</view>
-
 				<view class="detail-row" @click="showContractPopup = true">
 					<view class="col-warn fs28 fwb">请选择合同上传期限</view>
 					<view class="col4 fs28">{{ contractUploadHours ? contractHoursLabel : '请选择' }} ></view>
@@ -143,58 +142,6 @@
 					<view class="col5 fs28 fwb">合计冻结</view>
 					<view class="col4 fs28 fwb">¥{{ formatPrice(Number(order.commissionAmount.replace(/,/g,'')) + Number(order.serviceFee.replace(/,/g,''))) }}</view>
 				</view>
-
-			<!-- ========== 交付模式选择 ========== -->
-			<view class="mt30 mb20">
-				<view class="fs34 fwb col1 lh36 mb20">
-					交付模式
-					<text class="fs24 col-red ml10">*</text>
-				</view>
-				<view class="delivery-modes">
-					<!-- 一次性交付 -->
-					<view class="mode-card" :class="{ active: deliveryMode === 1 }" @click="deliveryMode = 1">
-						<view class="mode-icon" :class="{ active: deliveryMode === 1 }">
-							<text class="fs28 colf">一</text>
-						</view>
-						<view class="mode-info">
-							<view class="fs28 fwb col1">一次性交付</view>
-							<view class="fs22 col9 mt5">订单完成后一次性结算佣金</view>
-						</view>
-						<view v-if="deliveryMode === 1" class="check-icon">✓</view>
-					</view>
-
-					<!-- 分阶段交付 -->
-					<view class="mode-card" :class="{ active: deliveryMode === 2 }" @click="selectStagedMode">
-						<view class="mode-icon staged" :class="{ active: deliveryMode === 2 }">
-							<text class="fs28 colf">分</text>
-						</view>
-						<view class="mode-info">
-							<view class="fs28 fwb col1">分阶段交付</view>
-							<view class="fs22 col9 mt5">分多个阶段进行，每阶段独立结算</view>
-						</view>
-						<view v-if="deliveryMode === 2" class="check-icon">✓</view>
-					</view>
-				</view>
-			</view>
-
-			<!-- ========== 阶段设置（仅分阶段模式显示） ========== -->
-			<view class="mt30 mb20" v-if="deliveryMode === 2">
-				<view class="fs34 fwb col1 lh36 mb20">
-					阶段设置
-					<text class="fs24 col-red ml10">*</text>
-				</view>
-
-				<!-- 阶段数量输入 -->
-				<view class="stage-input-box">
-					<view class="fs28 col5 mb10">阶段数量</view>
-					<input v-model.number="totalStages" type="number" placeholder="请输入阶段数量（3-20）"
-						class="stage-input" @blur="validateStages" />
-					<view class="fs24 col9 mt10">
-						<text class="col-warn">提示：</text>请输入3-20之间的阶段数，佣金将按阶段数平均分配
-					</view>
-				</view>
-			</view>
-
 				<view class="detail-row" @click="showContractPopup = true">
 					<view class="col-warn fs28 fwb">请选择合同上传期限</view>
 					<view class="col4 fs28">{{ contractUploadHours ? contractHoursLabel : '请选择' }} ></view>
@@ -241,72 +188,8 @@
 				</template>
 			</view>
 
-
 			<!-- 状态4：履约执行 -->
 			<view class="jj-box mb30" v-if="order.state === 4">
-				<!-- ✨ 新增：分阶段模式的阶段进度展示 -->
-				<view class="stage-progress-section mb30" v-if="order.deliveryMode === 2 && order.stageInfo">
-					<view class="fs34 fwb col1 lh36 mb20">
-						履约进度
-					</view>
-
-					<!-- 阶段进度总览 -->
-					<view class="stage-overview-card mb20">
-						<view class="flex-box mb15" style="align-items:center;">
-							<view class="stage-icon-box">
-								<text class="fs28 colf fwb">{{ order.stageInfo.current_stage }}/{{ order.stageInfo.total_stages }}</text>
-							</view>
-							<view class="flex-grow-1 ml20">
-								<view class="fs28 fwb colf">第{{ order.stageInfo.current_stage }}阶段</view>
-								<view class="fs24 colf mt5" style="opacity:0.8;">共{{ order.stageInfo.total_stages }}个阶段，已完成{{ order.stageInfo.completed_stages }}个</view>
-							</view>
-						</view>
-
-						<!-- 进度条 -->
-						<view class="stage-progress-bar">
-							<view class="stage-progress-fill" :style="{ width: (order.stageInfo.completed_stages / order.stageInfo.total_stages * 100) + '%' }"></view>
-						</view>
-					</view>
-
-					<!-- 当前阶段详情 -->
-					<view class="current-stage-card" v-if="order.currentStageDetail">
-						<view class="fs28 fwb col1 mb15">当前阶段状态</view>
-
-						<!-- 阶段状态步骤 -->
-						<view class="stage-status-steps">
-							<view class="stage-step" :class="{ active: order.currentStageDetail.release_status >= 1 }">
-								<view class="step-dot"></view>
-								<view class="step-label fs24">通知系统打佣金</view>
-							</view>
-							<view class="stage-step" :class="{ active: order.currentStageDetail.release_status >= 2 }">
-								<view class="step-dot"></view>
-								<view class="step-label fs24">审核打款中</view>
-							</view>
-							<view class="stage-step" :class="{ active: order.currentStageDetail.release_status >= 4 }">
-								<view class="step-dot"></view>
-								<view class="step-label fs24">打款完成</view>
-							</view>
-						</view>
-
-						<view class="stage-detail-info mt20">
-							<view class="flex-box mb10">
-								<view class="fs26 col5">阶段名称：</view>
-								<view class="fs26 col1 fwb">{{ order.currentStageDetail.stage_name }}</view>
-							</view>
-							<view class="flex-box mb10">
-								<view class="fs26 col5">放款金额：</view>
-								<view class="fs26 col4">¥{{ order.currentStageDetail.release_amount }}</view>
-							</view>
-							<view class="flex-box">
-								<view class="fs26 col5">当前状态：</view>
-								<view class="fs26" :class="order.currentStageDetail.release_status === 4 ? 'col4' : 'col-warn'">
-									{{ order.currentStageDetail.release_status_text }}
-								</view>
-							</view>
-						</view>
-					</view>
-				</view>
-
 				<!-- 买家付款凭证未上传 -->
 				<template v-if="!order.paymentProof">
 					<view class="fs34 fwb col1 lh36 mb20">等待买家付款</view>
@@ -501,11 +384,7 @@
 					contractInfo: null,
 					depositInfo: null,
 					logisticsInfo: null,
-					paymentProof: null,
-					// ✨ 新增：交付模式和阶段信息
-					deliveryMode: 1,
-					stageInfo: null,
-					currentStageDetail: null
+					paymentProof: null
 				},
 				logs: [],
 				logisticsCompany: '',
@@ -536,7 +415,9 @@
 				],
 				// ✨ 新增：交付模式相关
 				deliveryMode: 1,       // 1=一次性 2=分阶段
-				totalStages: 3         // 默认3阶段（范围3-20）
+				totalStages: 5,        // 默认5阶段
+				customStages: '',      // 自定义阶段数输入
+				stageNames: []         // 阶段名称数组
 			}
 		},
 		computed: {
@@ -608,10 +489,6 @@
 						this.order.depositInfo = d.deposit_info || null;
 						this.order.logisticsInfo = d.logistics_info || null;
 						this.order.paymentProof = d.payment_proof || null;
-						// ✨ 新增：解析交付模式和阶段信息
-						this.order.deliveryMode = d.delivery_mode || 1;
-						this.order.stageInfo = d.stage_info || null;
-						this.order.currentStageDetail = d.current_stage_detail || null;
 
 						this.logs = [];
 
@@ -648,10 +525,7 @@
 				let total = (Number(commAmt) + Number(svcFee)).toFixed(2);
 				uni.showModal({
 					title: '缴纳佣金及服务费',
-					content: '佣金 ¥' + this.order.commissionAmount +
-					' + 服务费 ¥' + this.order.serviceFee +
-					'，合计 ¥' + total + modeText +
-					'。合同上传期限：' + this.contractHoursLabel + '。',
+					content: '佣金 ¥' + this.order.commissionAmount + ' + 服务费 ¥' + this.order.serviceFee + '，合计 ¥' + total + '，将从钱包余额中冻结。合同上传期限：' + this.contractHoursLabel + '。',
 					success: (res) => {
 						if (res.confirm) {
 							this.$core.post({
@@ -699,38 +573,20 @@
 				if (!this.contractUploadHours) {
 					uni.showToast({ title: '请先选择合同上传期限', icon: 'none' });
 					return;
-
-			// ✨ 新增：验证分阶段参数
-			if (this.deliveryMode === 2) {
-				if (this.totalStages < 3 || this.totalStages > 20) {
-					uni.showToast({ title: '阶段数必须在3-20之间', icon: 'none' });
-					return;
-				}
-			}
 				}
 				let commAmt = this.order.commissionAmount.replace(/,/g, '');
 				let svcFee = this.order.serviceFee.replace(/,/g, '');
 				let total = (Number(commAmt) + Number(svcFee)).toFixed(2);
-
-			// ✨ 新增：构建交付模式提示文本
-			let modeText = this.deliveryMode === 2
-				? `，分${this.totalStages}阶段交付`
-				: '，一次性交付';
 				uni.showModal({
 					title: '锁定佣金',
-					content: '佣金 ¥' + this.order.commissionAmount +
-					' + 服务费 ¥' + this.order.serviceFee +
-					'，合计 ¥' + total + modeText +
-					'。合同上传期限：' + this.contractHoursLabel + '。',
+					content: '佣金 ¥' + this.order.commissionAmount + ' + 服务费 ¥' + this.order.serviceFee + '，合计 ¥' + total + '，将从钱包余额中冻结。合同上传期限：' + this.contractHoursLabel + '。',
 					success: (res) => {
 						if (res.confirm) {
 							this.$core.post({
 								url: 'xiluxc.fc_order/lock_commission',
 								data: {
 									order_id: this.orderId,
-									contract_upload_hours: this.contractUploadHours,
-									delivery_mode: this.deliveryMode,
-									total_stages: this.totalStages
+									contract_upload_hours: this.contractUploadHours
 								},
 								success: ret => {
 									uni.showToast({ title: '佣金已锁定', icon: 'success' });
@@ -981,31 +837,7 @@
 			formatPrice(price) {
 				if (!price && price !== 0) return '0.00';
 				return Number(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-			},
-		// ✨ 新增：选择分阶段模式
-		selectStagedMode() {
-			this.deliveryMode = 2;
-			if (this.totalStages === 0 || this.totalStages === 1 || this.totalStages === 5) {
-				this.totalStages = 3; // 默认3阶段
 			}
-		},
-		// ✨ 新增：验证阶段数
-		validateStages() {
-			const val = parseInt(this.totalStages);
-			if (isNaN(val) || val < 3) {
-				this.totalStages = 3;
-				uni.showToast({
-					title: '阶段数最少为3',
-					icon: 'none'
-				});
-			} else if (val > 20) {
-				this.totalStages = 20;
-				uni.showToast({
-					title: '阶段数最多为20',
-					icon: 'none'
-				});
-			}
-		}
 		}
 	}
 </script>
@@ -1449,234 +1281,4 @@
 			cursor: pointer;
 		}
 	}
-
-/* ========== 阶段进度样式 ========== */
-.stage-progress-section {
-	padding: 0;
-}
-
-.stage-overview-card {
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	border-radius: 20rpx;
-	padding: 30rpx;
-	box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.3);
-}
-
-.stage-icon-box {
-	width: 100rpx;
-	height: 100rpx;
-	background: rgba(255, 255, 255, 0.3);
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	backdrop-filter: blur(10rpx);
-}
-
-.stage-progress-bar {
-	height: 12rpx;
-	background: rgba(255, 255, 255, 0.3);
-	border-radius: 6rpx;
-	overflow: hidden;
-	margin-top: 20rpx;
-}
-
-.stage-progress-fill {
-	height: 100%;
-	background: #ffffff;
-	border-radius: 6rpx;
-	transition: width 0.3s ease;
-}
-
-.current-stage-card {
-	background: #f7f8fa;
-	border-radius: 20rpx;
-	padding: 30rpx;
-	border: 2rpx solid #e8e9eb;
-}
-
-.stage-status-steps {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	position: relative;
-	padding: 20rpx 0;
-}
-
-.stage-status-steps::before {
-	content: '';
-	position: absolute;
-	top: 50%;
-	left: 10%;
-	right: 10%;
-	height: 4rpx;
-	background: #e8e9eb;
-	transform: translateY(-50%);
-	z-index: 0;
-}
-
-.stage-step {
-	position: relative;
-	z-index: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	flex: 1;
-}
-
-.stage-step .step-dot {
-	width: 24rpx;
-	height: 24rpx;
-	background: #e8e9eb;
-	border-radius: 50%;
-	margin-bottom: 10rpx;
-	transition: all 0.3s ease;
-}
-
-.stage-step.active .step-dot {
-	width: 32rpx;
-	height: 32rpx;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.4);
-}
-
-.stage-step .step-label {
-	color: #999;
-	text-align: center;
-	max-width: 160rpx;
-	line-height: 1.4;
-}
-
-.stage-step.active .step-label {
-	color: #667eea;
-	font-weight: bold;
-}
-
-.stage-detail-info {
-	background: white;
-	border-radius: 16rpx;
-	padding: 25rpx;
-}
-
 </style>
-
-	/* ========== 交付模式卡片 ========== */
-	.delivery-modes {
-		display: flex;
-		gap: 24rpx;
-	}
-
-	.mode-card {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		padding: 30rpx 24rpx;
-		background: #F5F7FB;
-		border-radius: 16rpx;
-		border: 2rpx solid #E5E7EB;
-		position: relative;
-		transition: all 0.3s;
-
-		&.active {
-			background: linear-gradient(135deg, #FFF5F0, #FFFFFF);
-			border-color: #FE4B01;
-			box-shadow: 0 4rpx 12rpx rgba(254, 75, 1, 0.1);
-		}
-	}
-
-	.mode-icon {
-		width: 60rpx;
-		height: 60rpx;
-		border-radius: 12rpx;
-		background: #CCCCCC;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-		transition: all 0.3s;
-
-		&.active {
-			background: #FE4B01;
-		}
-
-		&.staged.active {
-			background: linear-gradient(135deg, #FE4B01, #FF7E3F);
-		}
-	}
-
-	.mode-info {
-		flex: 1;
-		margin-left: 20rpx;
-	}
-
-	.check-icon {
-		position: absolute;
-		top: 10rpx;
-		right: 10rpx;
-		width: 40rpx;
-		height: 40rpx;
-		border-radius: 50%;
-		background: #FE4B01;
-		color: #FFFFFF;
-		font-size: 24rpx;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-
-
-	.col-red {
-		color: #FF4D4F;
-	}
-	/* ========== 阶段输入框 ========== */
-	.stage-input-box {
-		padding: 24rpx;
-		background: #F5F7FB;
-		border-radius: 12rpx;
-	}
-
-	.stage-input {
-		width: 100%;
-		height: 72rpx;
-		padding: 0 24rpx;
-		background: #FFFFFF;
-		border: 2rpx solid #E5E7EB;
-		border-radius: 12rpx;
-		font-size: 28rpx;
-		color: #333333;
-	}
-
-	@media screen and (min-width: 768px) {
-		.stage-input {
-			height: 48px;
-			border-radius: 8px;
-		}
-	}
-
-
-	/* ========== 响应式（PC端） ========== */
-	@media screen and (min-width: 768px) {
-		.delivery-modes {
-			gap: 16px;
-		}
-
-		.mode-card {
-			padding: 20px 16px;
-			border-radius: 12px;
-			cursor: pointer;
-
-			&:hover {
-				transform: translateY(-2px);
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-			}
-		}
-
-		.mode-icon {
-			width: 44px;
-			height: 44px;
-			border-radius: 8px;
-		}
-
-
-	}

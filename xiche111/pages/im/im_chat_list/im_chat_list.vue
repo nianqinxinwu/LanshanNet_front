@@ -2,7 +2,11 @@
 	<view class="im-chat-list">
 		<!-- 导航栏 -->
 		<view class="nav-bar">
+			<view class="nav-left" @click="goBack">
+				<text class="back-icon">←</text>
+			</view>
 			<text class="nav-title">消息</text>
+			<view class="nav-right"></view>
 		</view>
 
 		<!-- 会话列表 -->
@@ -78,6 +82,11 @@ export default {
 		});
 	},
 	methods: {
+		goBack() {
+			uni.navigateBack({
+				delta: 1
+			});
+		},
 		loadList(cb) {
 			if (this.page === 1) this.loading = true;
 			this.$core.get({
@@ -170,16 +179,42 @@ export default {
 	height: 88rpx;
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	justify-content: space-between;
 	background: #fff;
 	border-bottom: 1rpx solid #eee;
 	padding-top: var(--status-bar-height);
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	position: relative;
+}
+
+.nav-left {
+	width: 80rpx;
+	height: 88rpx;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	cursor: pointer;
+}
+
+.back-icon {
+	font-size: 44rpx;
+	color: #333;
+	font-weight: bold;
+	line-height: 1;
 }
 
 .nav-title {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
 	font-size: 34rpx;
 	font-weight: bold;
 	color: #333;
+}
+
+.nav-right {
+	width: 80rpx;
 }
 
 .chat-list-scroll {

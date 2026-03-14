@@ -183,6 +183,70 @@
 					</view>
 				</view>
 
+
+				<!-- ✨ 新增：分阶段模式的阶段进度展示（state=4时显示） -->
+				<view class="jj-box mb30" v-if="orderInfo.state === 4 && orderInfo.deliveryMode === 2 && orderInfo.stageInfo">
+					<view class="fs34 fwb col1 lh36 mb20">
+						履约进度
+					</view>
+
+					<!-- 阶段进度总览 -->
+					<view class="stage-overview-card mb20">
+						<view class="flex-box mb15" style="align-items:center;">
+							<view class="stage-icon-box">
+								<text class="fs28 colf fwb">{{ orderInfo.stageInfo.current_stage }}/{{ orderInfo.stageInfo.total_stages }}</text>
+							</view>
+							<view class="flex-grow-1 ml20">
+								<view class="fs28 fwb colf">第{{ orderInfo.stageInfo.current_stage }}阶段</view>
+								<view class="fs24 colf mt5" style="opacity:0.8;">共{{ orderInfo.stageInfo.total_stages }}个阶段，已完成{{ orderInfo.stageInfo.completed_stages }}个</view>
+							</view>
+						</view>
+
+						<!-- 进度条 -->
+						<view class="stage-progress-bar">
+							<view class="stage-progress-fill" :style="{ width: (orderInfo.stageInfo.completed_stages / orderInfo.stageInfo.total_stages * 100) + '%' }"></view>
+						</view>
+					</view>
+
+					<!-- 当前阶段详情 -->
+					<view class="current-stage-card" v-if="orderInfo.currentStageDetail">
+						<view class="fs28 fwb col1 mb15">当前阶段状态</view>
+
+						<!-- 阶段状态步骤 -->
+						<view class="stage-status-steps">
+							<view class="stage-step" :class="{ active: orderInfo.currentStageDetail.release_status >= 1 }">
+								<view class="step-dot"></view>
+								<view class="step-label fs24">通知系统打佣金</view>
+							</view>
+							<view class="stage-step" :class="{ active: orderInfo.currentStageDetail.release_status >= 2 }">
+								<view class="step-dot"></view>
+								<view class="step-label fs24">审核打款中</view>
+							</view>
+							<view class="stage-step" :class="{ active: orderInfo.currentStageDetail.release_status >= 4 }">
+								<view class="step-dot"></view>
+								<view class="step-label fs24">打款完成</view>
+							</view>
+						</view>
+
+						<view class="stage-detail-info mt20">
+							<view class="flex-box mb10">
+								<view class="fs26 col5">阶段名称：</view>
+								<view class="fs26 col1 fwb">{{ orderInfo.currentStageDetail.stage_name }}</view>
+							</view>
+							<view class="flex-box mb10">
+								<view class="fs26 col5">放款金额：</view>
+								<view class="fs26 col4">¥{{ orderInfo.currentStageDetail.release_amount }}</view>
+							</view>
+							<view class="flex-box">
+								<view class="fs26 col5">当前状态：</view>
+								<view class="fs26" :class="orderInfo.currentStageDetail.release_status === 4 ? 'col4' : 'col-warn'">
+									{{ orderInfo.currentStageDetail.release_status_text }}
+								</view>
+							</view>
+						</view>
+					</view>
+				</view>
+
 				<!-- 付款凭证状态栏（state=4且已上传时显示） -->
 				<view class="jj-box mb30" v-if="orderInfo.state === 4 && orderInfo.payment_proof">
 					<view class="fs34 fwb col1 lh36 mb20">买家付款凭证</view>
@@ -340,6 +404,10 @@
 					contractUploadHours: 0,
 					executionHours: 72,
 					paymentUrgeDeadline: 0,
+					// ✨ 新增：交付模式和阶段信息
+					deliveryMode: 1,
+					stageInfo: null,
+					currentStageDetail: null,
 					contractDeadline: 0,
 					contractRejectReason: '',
 					contractStatus: 0
@@ -412,6 +480,10 @@
 					loading: false,
 					success: ret => {
 						this.orderInfo = Object.assign(this.orderInfo, ret.data);
+						// ✨ 新增：解析交付模式和阶段信息
+						this.orderInfo.deliveryMode = ret.data.delivery_mode || 1;
+						this.orderInfo.stageInfo = ret.data.stage_info || null;
+						this.orderInfo.currentStageDetail = ret.data.current_stage_detail || null;
 						if (ret.data.bonus_rules) {
 							this.bonusRules = ret.data.bonus_rules;
 						}
@@ -1236,4 +1308,109 @@
 			padding: 16px;
 		}
 	}
+
+/* ========== 阶段进度样式 ========== */
+.stage-overview-card {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	border-radius: 20rpx;
+	padding: 30rpx;
+	box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.3);
+}
+
+.stage-icon-box {
+	width: 100rpx;
+	height: 100rpx;
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	backdrop-filter: blur(10rpx);
+}
+
+.stage-progress-bar {
+	height: 12rpx;
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 6rpx;
+	overflow: hidden;
+	margin-top: 20rpx;
+}
+
+.stage-progress-fill {
+	height: 100%;
+	background: #ffffff;
+	border-radius: 6rpx;
+	transition: width 0.3s ease;
+}
+
+.current-stage-card {
+	background: #f7f8fa;
+	border-radius: 20rpx;
+	padding: 30rpx;
+	border: 2rpx solid #e8e9eb;
+}
+
+.stage-status-steps {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	position: relative;
+	padding: 20rpx 0;
+}
+
+.stage-status-steps::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 10%;
+	right: 10%;
+	height: 4rpx;
+	background: #e8e9eb;
+	transform: translateY(-50%);
+	z-index: 0;
+}
+
+.stage-step {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex: 1;
+}
+
+.stage-step .step-dot {
+	width: 24rpx;
+	height: 24rpx;
+	background: #e8e9eb;
+	border-radius: 50%;
+	margin-bottom: 10rpx;
+	transition: all 0.3s ease;
+}
+
+.stage-step.active .step-dot {
+	width: 32rpx;
+	height: 32rpx;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.4);
+}
+
+.stage-step .step-label {
+	color: #999;
+	text-align: center;
+	max-width: 160rpx;
+	line-height: 1.4;
+}
+
+.stage-step.active .step-label {
+	color: #667eea;
+	font-weight: bold;
+}
+
+.stage-detail-info {
+	background: white;
+	border-radius: 16rpx;
+	padding: 25rpx;
+}
+
 </style>

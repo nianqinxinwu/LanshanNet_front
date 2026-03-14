@@ -157,9 +157,8 @@
 			this.loadCart();
 		},
 		onShow() {
-			if (this.loaded) {
-				this.loadCart();
-			}
+		// ✨ 修复：每次页面显示时都刷新数据（从下单页面返回时需要刷新）
+		this.loadCart();
 			// #ifdef H5
 			if (this.isPC) {
 				uni.hideTabBar({ animation: false });

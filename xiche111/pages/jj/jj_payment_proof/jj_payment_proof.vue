@@ -12,7 +12,7 @@
 				<view class="flex-grow-1 pl20">
 					<view class="fs30 col1 fwb m-ellipsis">{{ orderInfo.productName }}</view>
 					<view class="fs24 col5 mt10">订单号：{{ orderInfo.orderNo }}</view>
-					<view class="fs24 col5 mt6">合同金额：{{ orderInfo.commissionAmount }}</view>
+					<view class="fs24 col5 mt6">{{ orderInfo.contractAmountText }}</view>
 				</view>
 			</view>
 		</view>
@@ -89,6 +89,7 @@ export default {
 				productName: '',
 				coverImage: '',
 				commissionAmount: '0.00',
+				contractAmountText: '',
 			},
 			fileList: [],
 			logisticsMethod: '',
@@ -120,6 +121,7 @@ export default {
 						productName: d.productName,
 						coverImage: d.coverImage,
 						commissionAmount: d.commissionAmount,
+						contractAmountText: d.contract_amount_text || ('合同金额：' + d.commissionAmount),
 					};
 					if (d.payment_proof) {
 						if (d.payment_proof.status === 2) {
